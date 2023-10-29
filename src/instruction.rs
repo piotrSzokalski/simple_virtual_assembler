@@ -1,7 +1,7 @@
 use crate::opcodes::Opcode;
 
+/// Instruction used by SVM,  wrapper for Opcode
 #[derive(PartialEq, Eq, Clone)]
-/// Instruction used by SVM wrapper of Opcode
 pub struct Instruction {
      opcode: Opcode,
 }

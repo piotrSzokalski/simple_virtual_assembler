@@ -1,6 +1,6 @@
 use crate::register::Register;
 
-/// Operand
+/// Operand, integer or register
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Operand {
     /// Integer value

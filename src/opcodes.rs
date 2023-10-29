@@ -1,12 +1,12 @@
-use crate::operand::Operand;
+use crate::{operand::Operand, register::Register};
 
-#[derive(Debug, PartialEq, Eq, Clone )]
 /// Opcodes used by SVA
+#[derive(Debug, PartialEq, Eq, Clone )]
 pub enum Opcode {
     /// Do nothing
     NOP,
     /// Copy value of first argument ot second
-    MOV(Operand, Operand),
+    MOV(Operand, Register),
     /// Sleep
     SPL(i32),
     // Add operand to acc

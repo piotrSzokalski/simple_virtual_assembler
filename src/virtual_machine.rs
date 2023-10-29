@@ -1,16 +1,12 @@
 //use std::collections::btree_map::Values;
 
 use crate::{
+    flag::Flag,
     instruction::Instruction,
     opcodes::Opcode,
     operand::Operand,
-    flag::Flag,
-    register::Register
+    register::{self, Register},
 };
-
-
-
-
 
 pub struct VirtualMachine {
     /// Program counter register
@@ -29,6 +25,12 @@ pub struct VirtualMachine {
 
 impl VirtualMachine {
     /// Create an instance of VM
+    ///
+    /// ### Arguments
+    ///
+    /// * 'program' - List of instruction to be executed
+    ///
+    /// ### Returns
     pub fn new(program: Vec<Instruction>) -> VirtualMachine {
         VirtualMachine {
             pc: 0,
@@ -39,65 +41,128 @@ impl VirtualMachine {
             program,
         }
     }
-
-    /// Ads operand to acc
-    fn add(&mut self, operand: Operand) {
+    /// Copies operand into register
+    /// ### Arguments
+    /// 
+    /// * Operand - i32 or register
+    /// * Register - register
+    /// 
+    fn move_operand(&mut self, operand: Operand, register: Register) {
+        let index;
+        let move_to_port = match register {
+            Register::PORT(i) => {
+                index = i;
+                true
+            }
+            Register::GENERAL(i) => {
+                index = i;
+                false
+            }
+        };
+        if index > 3 {
+            panic!();
+        }
         match operand {
             Operand::IntegerValue(value) => {
-                self.acc += value;
-            }
-            Operand::REGISTER(register) => {
-                match register {
-                    Register::GENERAL(index) => self.acc += self.r[index],
-                    Register::PORT(index) =>  self.acc += self.p[index],
+                if move_to_port {
+                    self.p[index] = value;
+                } else {
+                    self.r[index] = value;
                 }
-                
             }
+            Operand::REGISTER(register) => match register {
+                Register::GENERAL(i) => {
+                    if move_to_port {
+                        self.p[index] = self.r[i];
+                    } else {
+                        self.r[index] = self.r[i]
+                    }
+                }
+                Register::PORT(i) => {
+                    if move_to_port {
+                        self.p[index] = self.p[i];
+                    } else {
+                        self.r[index] = self.p[i];
+                    }
+                }
+            },
+        }
+    }
+
+    /// apply operation on acc
+    ///
+    /// ### Arguments
+    ///
+    /// * 'Operand' - i32 or Register
+    /// * 'operation' - closure taking to two parameters acc and operand
+    ///
+    /// ### Example
+    ///
+    /// ```rs
+    ///     apply_operation(operand, |a, b| a + b)
+    /// ```
+    fn apply_operation<F>(&mut self, operand: Operand, operation: F)
+    where
+        F: Fn(i32, i32) -> i32,
+    {
+        match operand {
+            Operand::IntegerValue(value) => {
+                self.acc = operation(self.acc, value);
+            }
+            Operand::REGISTER(register) => match register {
+                Register::GENERAL(index) => {
+                    self.acc = operation(self.acc, self.r[index]);
+                }
+                Register::PORT(index) => {
+                    self.acc = operation(self.acc, self.p[index]);
+                }
+            },
         }
     }
 
     /// Fetches next instruction from the program and increments program counter by one
     pub fn fetch(&mut self) -> Instruction {
-            let opcode = self.program[self.pc].clone();
-            self.pc += 1;
-            opcode
+        let opcode = self.program[self.pc].clone();
+        self.pc += 1;
+        opcode
     }
-        /// Executes single instruction
+    /// Executes single instruction
     pub fn execute(&mut self) -> bool {
-            if (self.pc >= self.program.len()) {
+        if self.pc >= self.program.len() {
+            return false;
+        }
+        let instruction = self.fetch();
+        let opcode = instruction.get_opcode();
+        match opcode {
+            Opcode::HLT => {
+                println!("HLT encountered");
                 return false;
             }
-            let instruction = self.fetch();
-            let opcode = instruction.get_opcode();
-            match opcode {
-                Opcode::HLT => {
-                    println!("HLT encountered");
-                    return false;
-                }
-                Opcode::NOP => todo!(),
-                Opcode::MOV(_, _) => todo!(),
-                Opcode::SPL(_) => todo!(),
-                Opcode::ADD(operand) => self.add(operand),
-                Opcode::SUB(_) => todo!(),
-                Opcode::MUL(value) => todo!(),
-                Opcode::DIV(_) => todo!(),
-                Opcode::MOD(_) => todo!(),
-                Opcode::AND(_) => todo!(),
-                Opcode::OR(_) => todo!(),
-                Opcode::XOR(_) => todo!(),
-                Opcode::NOT => todo!(),
-                Opcode::JE(_) => todo!(),
-                Opcode::JL(_) => todo!(),
-                Opcode::JG(_) => todo!(),
-            }
-            true
+            Opcode::NOP => todo!(),
+            Opcode::MOV(o1, o2) => self.move_operand(o1, o2),
+            Opcode::SPL(_) => todo!(),
+            Opcode::ADD(operand) => self.apply_operation(operand, |a, b| a + b),
+            Opcode::SUB(operand) => self.apply_operation(operand, |a, b| a - b),
+            Opcode::MUL(operand) => self.apply_operation(operand, |a, b| a * b),
+            Opcode::DIV(operand) => self.apply_operation(operand, |a, b| a / b),
+            Opcode::MOD(operand) => self.apply_operation(operand, |a, b| a % b),
+            Opcode::AND(operand) => self.apply_operation(operand, |a, b| a & b),
+            Opcode::OR(operand) => self.apply_operation(operand, |a, b| a | b),
+            Opcode::XOR(operand) => self.apply_operation(operand, |a, b| a ^ b),
+            Opcode::NOT => { self.acc = ! self.acc },
+            Opcode::JE(_) => todo!(),
+            Opcode::JL(_) => todo!(),
+            Opcode::JG(_) => todo!(),
         }
+        true
+    }
 
-        /// Runs all instructions in given program
+    /// Runs all instructions in given program
     pub fn run(&mut self) {
-            loop {
-                self.execute();
-            }
+        let mut running = true;
+        while running {
+            running = self.execute();
+        }
     }
 }
 
@@ -131,13 +196,80 @@ mod tests {
 
     #[test]
     fn test_vm_instruction_add() {
-        let program = vec! [
+        let program = vec![
             Instruction::new(Opcode::ADD(Operand::IntegerValue(10))),
+            Instruction::new(Opcode::ADD(Operand::IntegerValue(45))),
         ];
         let mut vm = VirtualMachine::new(program);
         vm.execute();
-        assert_eq!(vm.acc, 10);
+        vm.execute();
+        assert_eq!(vm.acc, 55);
+    }
+
+    #[test]
+    fn test_vm_instruction_subtract() {
+        let program = vec![
+            Instruction::new(Opcode::ADD(Operand::IntegerValue(100))),
+            Instruction::new(Opcode::SUB(Operand::IntegerValue(90))),
+            Instruction::new(Opcode::SUB(Operand::IntegerValue(1))),
+            Instruction::new(Opcode::SUB(Operand::IntegerValue(1))),
+            Instruction::new(Opcode::HLT),
+        ];
+        let mut vm = VirtualMachine::new(program);
+        vm.run();
+
+        assert_eq!(vm.acc, 8);
+    }
+
+    #[test]
+    fn test_vm_instruction_multiply() {
+        let program = vec![
+            Instruction::new(Opcode::ADD(Operand::IntegerValue(3))),
+            Instruction::new(Opcode::MUL(Operand::IntegerValue(7))),
+        ];
+        let mut vm = VirtualMachine::new(program);
+        vm.execute();
+        vm.execute();
+        assert_eq!(vm.acc, 21);
+    }
+
+    #[test]
+    fn test_vm_instruction_divide() {
+        let program = vec![
+            Instruction::new(Opcode::ADD(Operand::IntegerValue(100))),
+            Instruction::new(Opcode::DIV(Operand::IntegerValue(5))),
+        ];
+        let mut vm = VirtualMachine::new(program);
+        vm.execute();
+        vm.execute();
+        assert_eq!(vm.acc, 20);
+    }
+
+    #[test]
+    fn test_vm_instruction_move() {
+        let program = vec![
+            // MOV 12 R1    -> Moving integer into register
+            Instruction::new(Opcode::MOV(Operand::IntegerValue(12), Register::GENERAL(1))),
+            // MOV R1 R2    -> Moving from register to register
+            Instruction::new(Opcode::MOV(Operand::REGISTER(Register::GENERAL(1)), Register::GENERAL(2))),
+            // MOV R1 P1    -> Moving from register to port
+            Instruction::new(Opcode::MOV(Operand::REGISTER(Register::GENERAL(1)), Register::PORT(1))),
+
+            // MOV 7 P2     -> Moving integer into port
+            Instruction::new(Opcode::MOV(Operand::IntegerValue(7), Register::PORT(2))),
+            // MOV P1 R1    -> Moving from port to register
+            Instruction::new(Opcode::MOV(Operand::REGISTER(Register::PORT(2)), Register::GENERAL(1))),
+
         
+            Instruction::new(Opcode::HLT),
+        ];
+        // expected:  r1 = 7, r2 =  12, p1 = 12, p2 = 7
+        let mut vm = VirtualMachine::new(program);
+        vm.run();
+        assert_eq!(vm.r[1], 7);
+        assert_eq!(vm.r[2], 12);
+        assert_eq!(vm.p[1], 12);
+        assert_eq!(vm.p[2], 7);
     }
 }
 
