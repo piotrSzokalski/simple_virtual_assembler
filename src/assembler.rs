@@ -15,7 +15,7 @@ impl Assembler {
 
         self.translation = HashMap::from([
             ("hlt", Opcode::HLT),
-         //   ("add", Opcode::ADD),
+         //   ("add", Opcode::ADD), test
         ])
     }
     pub fn parse(program_text: String) -> Vec<Instruction> {
