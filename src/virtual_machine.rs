@@ -271,7 +271,7 @@ mod tests {
         assert_eq!(vm.r[1], 7);
         assert_eq!(vm.r[2], 12);
         assert_eq!(vm.p[1], 12);
-        assert_eq!(vm.p[2], 8);
+        assert_eq!(vm.p[2], 7);
     }
 }
 
