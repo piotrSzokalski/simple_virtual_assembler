@@ -21,6 +21,8 @@ pub struct VirtualMachine {
     p: [i32; 4],
     /// Vector of instructions to be executed
     program: Vec<Instruction>,
+    // Labels used for looping
+    //labels: Vec<(String, usize)>
 }
 
 impl VirtualMachine {
