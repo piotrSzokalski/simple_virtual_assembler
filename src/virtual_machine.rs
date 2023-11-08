@@ -5,7 +5,6 @@ use crate::{
     instruction::Instruction,
     opcodes::Opcode,
     operand::Operand,
-    register::{self, Register},
 };
 
 pub struct VirtualMachine {
@@ -49,45 +48,72 @@ impl VirtualMachine {
     /// * Operand - i32 or register
     /// * Register - register
     /// 
-    fn move_operand(&mut self, operand: Operand, register: Register) {
+    fn move_operand(&mut self, operand1: Operand, operand2: Operand) {
         let index;
-        let move_to_port = match register {
-            Register::PORT(i) => {
-                index = i;
-                true
-            }
-            Register::GENERAL(i) => {
+        let move_to_port = match operand2 {
+
+            Operand::GeneralRegister(i) =>  {
                 index = i;
                 false
             }
+
+            Operand::PortRegister(i) => {
+                index = i;
+                true
+            }
+            Operand::IntegerValue(_) => panic!(),
+
+            // Register::PORT(i) => {
+            //     index = i;
+            //     true
+            // }
+            // Register::GENERAL(i) => {
+            //     index = i;
+            //     false
+            // }
         };
         if index > 3 {
             panic!();
         }
-        match operand {
+        match operand1 {
             Operand::IntegerValue(value) => {
                 if move_to_port {
                     self.p[index] = value;
                 } else {
                     self.r[index] = value;
                 }
-            }
-            Operand::REGISTER(register) => match register {
-                Register::GENERAL(i) => {
-                    if move_to_port {
-                        self.p[index] = self.r[i];
-                    } else {
-                        self.r[index] = self.r[i]
-                    }
-                }
-                Register::PORT(i) => {
-                    if move_to_port {
-                        self.p[index] = self.p[i];
-                    } else {
-                        self.r[index] = self.p[i];
-                    }
+            },
+            Operand::PortRegister(i) => {
+                if move_to_port {
+                    self.p[index] = self.p[i];
+                } else {
+                    self.r[index] = self.p[i]
                 }
             },
+            Operand::GeneralRegister(i) => {
+                if move_to_port {
+                    self.p[index] = self.r[i];
+                } else {
+                    self.r[index] = self.r[i];
+                }
+            },
+
+            // Operand::REGISTER(register) => match register {
+            //     Register::GENERAL(i) => {
+            //         if move_to_port {
+            //             self.p[index] = self.r[i];
+            //         } else {
+            //             self.r[index] = self.r[i]
+            //         }
+            //     }
+            //     Register::PORT(i) => {
+            //         if move_to_port {
+            //             self.p[index] = self.p[i];
+            //         } else {
+            //             self.r[index] = self.p[i];
+            //         }
+            //     }
+            // },
         }
     }
 
@@ -111,14 +137,18 @@ impl VirtualMachine {
             Operand::IntegerValue(value) => {
                 self.acc = operation(self.acc, value);
             }
-            Operand::REGISTER(register) => match register {
-                Register::GENERAL(index) => {
-                    self.acc = operation(self.acc, self.r[index]);
-                }
-                Register::PORT(index) => {
-                    self.acc = operation(self.acc, self.p[index]);
-                }
-            },
+            Operand::GeneralRegister(index) => self.acc = operation(self.acc, self.r[index]),
+            Operand::PortRegister(index) => self.acc = operation(self.acc, self.p[index]),
+
+
+            // Operand::REGISTER(register) => match register {
+            //     Register::GENERAL(index) => {
+            //         self.acc = operation(self.acc, self.r[index]);
+            //     }
+            //     Register::PORT(index) => {
+            //         self.acc = operation(self.acc, self.p[index]);
+            //     }
+            // },
         }
     }
 
@@ -251,16 +281,26 @@ mod tests {
     fn test_vm_instruction_move() {
         let program = vec![
             // MOV 12 R1    -> Moving integer into register
-            Instruction::new(Opcode::MOV(Operand::IntegerValue(12), Register::GENERAL(1))),
             // MOV R1 R2    -> Moving from register to register
-            Instruction::new(Opcode::MOV(Operand::REGISTER(Register::GENERAL(1)), Register::GENERAL(2))),
             // MOV R1 P1    -> Moving from register to port
-            Instruction::new(Opcode::MOV(Operand::REGISTER(Register::GENERAL(1)), Register::PORT(1))),
-
             // MOV 7 P2     -> Moving integer into port
-            Instruction::new(Opcode::MOV(Operand::IntegerValue(7), Register::PORT(2))),
             // MOV P1 R1    -> Moving from port to register
-            Instruction::new(Opcode::MOV(Operand::REGISTER(Register::PORT(2)), Register::GENERAL(1))),
+
+
+            Instruction::new(Opcode::MOV(Operand::IntegerValue(12), Operand::GeneralRegister(1))),
+            //Instruction::new(Opcode::MOV(Operand::IntegerValue(12), Register::GENERAL(1))),
+            
+            Instruction::new(Opcode::MOV(Operand::GeneralRegister(1), Operand::GeneralRegister(2))),
+            //Instruction::new(Opcode::MOV(Operand::REGISTER(Register::GENERAL(1)), Register::GENERAL(2))),
+            
+            Instruction::new(Opcode::MOV(Operand::GeneralRegister(1), Operand::PortRegister(1))),
+            //Instruction::new(Opcode::MOV(Operand::REGISTER(Register::GENERAL(1)), Register::PORT(1))),
+            
+            Instruction::new(Opcode::MOV(Operand::IntegerValue(7),  Operand::PortRegister(2))),
+            //Instruction::new(Opcode::MOV(Operand::IntegerValue(7), Register::PORT(2))),
+            
+            Instruction::new(Opcode::MOV(Operand::PortRegister(2), Operand::GeneralRegister(1))),
+            //Instruction::new(Opcode::MOV(Operand::REGISTER(Register::PORT(2)), Register::GENERAL(1))),
 
         
             Instruction::new(Opcode::HLT),

@@ -1,12 +1,12 @@
-use crate::register::Register;
-
 /// Operand, integer or register
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Operand {
     /// Integer value
     IntegerValue(i32),
-    /// General register address/index r0, r1, r2, r3, p0, p1, p2, p3
-    REGISTER(Register),
+    /// General register address/index r0, r1, r2, r3
+    GeneralRegister(usize),
+    /// Port register used for I/O p0, p1, p2, p3
+    PortRegister(usize)
 }
 
 impl Operand {
@@ -15,8 +15,9 @@ impl Operand {
         Operand::IntegerValue(value)
     }
 
-    /// Creates an Operand variant with a REGISTER.
-    pub fn register(reg_num: Register) -> Operand {
-        Operand::REGISTER(reg_num)
-    }
+    // Creates an Operand variant with a REGISTER.
+    // pub fn register(reg_num: Register) -> Operand {
+    //     Operand::REGISTER(reg_num)
+    // }
 }
+
