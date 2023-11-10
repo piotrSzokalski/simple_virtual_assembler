@@ -1,6 +1,8 @@
 //use std::collections::btree_map::Values;
 
-use crate::{flag::Flag, instruction::Instruction, opcodes::Opcode, operand::Operand};
+use std::collections::HashMap;
+
+use crate::{flag::Flag, instruction::Instruction, opcodes::{Opcode, JMPCondition}, operand::Operand};
 
 pub struct VirtualMachine {
     /// Program counter register
@@ -15,8 +17,8 @@ pub struct VirtualMachine {
     p: [i32; 4],
     /// Vector of instructions to be executed
     program: Vec<Instruction>,
-    // Labels used for looping
-    //labels: Vec<(String, usize)>
+    // Labels used for jumps
+    labels: HashMap<String, usize>
 }
 
 impl VirtualMachine {
@@ -35,6 +37,7 @@ impl VirtualMachine {
             r: [0; 4],
             p: [0; 4],
             program,
+            labels: HashMap::new(),
         }
     }
     /// Copies operand into register
@@ -142,6 +145,26 @@ impl VirtualMachine {
         }
     }
 
+    /// Adds label unless it is already declared
+    pub fn add_label(&mut self, name: String) {
+        if ! self.labels.contains_key(&name) {
+            self.labels.insert(name, self.pc);
+        }
+    }
+
+    pub fn jump_to_label(&mut self, label: &str, condition: JMPCondition) {
+        if let Some(&jmp_to) = self.labels.get(label) {
+            match (self.flag, condition) {
+                (Flag::ZERO, JMPCondition::EQ) => {},
+                (Flag::EQUAL, JMPCondition::EQ) => self.pc = jmp_to,
+                (Flag::GREATER, JMPCondition::GRT) => self.pc = jmp_to,
+                (Flag::LESSER, JMPCondition::LST) => self.pc = jmp_to,
+                _ => {}
+            }
+        }
+    }
+    
+
     /// Fetches next instruction from the program and increments program counter by one
     pub fn fetch(&mut self) -> Instruction {
         let opcode = self.program[self.pc].clone();
@@ -154,28 +177,36 @@ impl VirtualMachine {
             return false;
         }
         let instruction = self.fetch();
-        let opcode = instruction.get_opcode();
-        match opcode {
-            Opcode::HLT => {
-                println!("HLT encountered");
-                return false;
-            }
-            Opcode::NOP => todo!(),
-            Opcode::MOV(o1, o2) => self.move_operand(o1, o2),
-            Opcode::SPL(_) => todo!(),
-            Opcode::ADD(operand) => self.apply_operation(operand, |a, b| a + b),
-            Opcode::SUB(operand) => self.apply_operation(operand, |a, b| a - b),
-            Opcode::MUL(operand) => self.apply_operation(operand, |a, b| a * b),
-            Opcode::DIV(operand) => self.apply_operation(operand, |a, b| a / b),
-            Opcode::MOD(operand) => self.apply_operation(operand, |a, b| a % b),
-            Opcode::AND(operand) => self.apply_operation(operand, |a, b| a & b),
-            Opcode::OR(operand) => self.apply_operation(operand, |a, b| a | b),
-            Opcode::XOR(operand) => self.apply_operation(operand, |a, b| a ^ b),
-            Opcode::NOT => self.acc = !self.acc,
-            Opcode::JE(_) => todo!(),
-            Opcode::JL(_) => todo!(),
-            Opcode::JG(_) => todo!(),
+     
+        match instruction {
+            Instruction::Opcode(opcode) => {
+                match opcode {
+                    Opcode::HLT => {
+                        println!("HLT encountered");
+                        return false;
+                    }
+                    Opcode::NOP => todo!(),
+                    Opcode::MOV(o1, o2) => self.move_operand(o1, o2),
+                    Opcode::SPL(_) => todo!(),
+                    Opcode::ADD(operand) => self.apply_operation(operand, |a, b| a + b),
+                    Opcode::SUB(operand) => self.apply_operation(operand, |a, b| a - b),
+                    Opcode::MUL(operand) => self.apply_operation(operand, |a, b| a * b),
+                    Opcode::DIV(operand) => self.apply_operation(operand, |a, b| a / b),
+                    Opcode::MOD(operand) => self.apply_operation(operand, |a, b| a % b),
+                    Opcode::AND(operand) => self.apply_operation(operand, |a, b| a & b),
+                    Opcode::OR(operand) => self.apply_operation(operand, |a, b| a | b),
+                    Opcode::XOR(operand) => self.apply_operation(operand, |a, b| a ^ b),
+                    Opcode::NOT => self.acc = !self.acc,
+                    Opcode::JE(_) => todo!(),
+                    Opcode::JL(_) => todo!(),
+                    Opcode::JG(_) => todo!(),
+                    Opcode::JMP(name, condition) => self.jump_to_label(&name, condition),
+                }
+            },
+            Instruction::Label(name) => self.add_label(name),
         }
+
+        
         true
     }
 
@@ -213,7 +244,7 @@ mod tests {
         let mut vm = VirtualMachine::new(program);
         let _i1 = vm.fetch();
         let i2 = vm.fetch();
-        assert_eq!(i2.get_opcode(), Opcode::SUB(Operand::IntegerValue(10)));
+        assert_eq!(i2.get_opcode().unwrap(), Opcode::SUB(Operand::IntegerValue(10)));
     }
 
     #[test]
@@ -309,6 +340,25 @@ mod tests {
         assert_eq!(vm.r[2], 12);
         assert_eq!(vm.p[1], 12);
         assert_eq!(vm.p[2], 7);
+    }
+
+
+    // FLAGS ARE NOT YET USED
+    // #[test]
+    // fn test_vm_labels_jumping() {
+
+
+    //     let program = vec![
+    //         Instruction::new(Opcode::ADD(Operand::IntegerValue(100))),
+    //         Instruction::new(Opcode::DIV(Operand::IntegerValue(5))),
+    //     ];
+    //     let mut vm = VirtualMachine::new(program);
+    //     vm.execute();
+    //     vm.execute();
+    //     assert_eq!(vm.acc, 20);
+
+    //     panic!();
+
     }
 }
 

@@ -1,5 +1,12 @@
 use crate::{operand::Operand};
 
+#[derive(Debug, PartialEq, Eq, Clone )]
+pub enum JMPCondition {
+    EQ,
+    LST,
+    GRT,
+}
+
 /// Opcodes used by SVA
 #[derive(Debug, PartialEq, Eq, Clone )]
 pub enum Opcode {
@@ -27,6 +34,8 @@ pub enum Opcode {
     XOR(Operand),
     /// NOT acc
     NOT,
+    /// Jum to label
+    JMP(String, JMPCondition),
     /// Jump to label if equal
     JE(String),
     /// Jump to label if lesser

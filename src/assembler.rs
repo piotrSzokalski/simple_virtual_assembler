@@ -99,9 +99,12 @@ impl Assembler {
 
         program
     }
-
-    fn parse_label(&mut self, label: &str, line: usize) -> Result<Instruction, ParsingError> {
-        Err(ParsingError::new("Unknown error", line))
+    // TODO return error if label is already in use 
+    fn parse_label(&mut self, name: &str, line: usize) -> Result<Instruction, ParsingError> {
+        
+        Ok(Instruction::new_label(name.to_string()))
+        
+        //Err(ParsingError::new("Unknown error", line))
     }
 
     fn parse_instruction(
@@ -134,7 +137,8 @@ impl Assembler {
             "HLT" => Ok(Instruction::new(Opcode::HLT)),
             "NOP" => Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
             "SPL" => Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
-            label => self.parse_label(label, current_line_number), //_ => Err(ParsingError::new("Unknown error", current_line_number)),
+            label if label.ends_with(':') => self.parse_label(label, current_line_number),
+            _ => Err(ParsingError::new("Unknown error", current_line_number)),
         };
 
         instruction
