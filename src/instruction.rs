@@ -10,6 +10,7 @@ impl Instruction {
     pub fn new(opcode: Opcode) -> Instruction {
         Instruction { opcode: opcode }
     }
+
     pub fn get_opcode(&self) -> Opcode {
         self.opcode.clone()
     }

@@ -1,13 +1,7 @@
-use std::{collections::HashMap, error::Error};
-
+use std::error;
 use std::fmt;
-use std::{error, result};
 
-use crate::{
-    instruction::{self, Instruction},
-    opcodes::Opcode,
-    operand::{self, Operand},
-};
+use crate::{instruction::Instruction, opcodes::Opcode, operand::Operand};
 
 #[derive(Debug)]
 pub struct ParsingError {
@@ -41,7 +35,12 @@ impl Assembler {
         Assembler {}
     }
 
-    fn parse_operand(&mut self, operand_text: &str, line: usize) -> Result<Operand, ParsingError> {
+    fn parse_operand(
+        &mut self,
+        operand_text: &str,
+        line: usize,
+        register_only: bool,
+    ) -> Result<Operand, ParsingError> {
         if operand_text.is_empty() {
             return Err(ParsingError::new("Empty operand", 0));
         }
@@ -55,125 +54,124 @@ impl Assembler {
                     if register_number > 3 {
                         Err(ParsingError::new("Invalid port number", line))
                     } else {
-                    Ok(Operand::GeneralRegister(register_number.try_into().unwrap()))
+                        Ok(Operand::GeneralRegister(
+                            register_number.try_into().unwrap(),
+                        ))
                     }
-                },
+                }
                 _ => Err(ParsingError::new("Invalid register number", line)),
             },
             'p' => match remaining_text.parse::<usize>() {
                 Ok(port_number) => {
-                    if port_number > 3  {
+                    if port_number > 3 {
                         Err(ParsingError::new("Invalid port number", line))
                     } else {
                         Ok(Operand::PortRegister(port_number))
                     }
-                },
+                }
                 _ => Err(ParsingError::new("Invalid port number", line)),
             },
             _ => match operand_text.parse::<i32>() {
-                Ok(parsed_int) => Ok(Operand::IntegerValue(parsed_int)),
-                _ => Err(ParsingError::new("Parsing error", line)),
+                Ok(parsed_int) => {
+                    if register_only {
+                        Err(ParsingError::new("This operand can't be integer ", line))
+                    } else {
+                        Ok(Operand::IntegerValue(parsed_int))
+                    }
+                }
+                Err(v) => Err(ParsingError::new("Can't parse integer", line)),
             },
         }
     }
 
-    // TEST
-    // pub fn parse_operand2(&mut self, operand_text: String, line: usize) -> Result<Operand, ParsingError> {
-
-    //     if let Some(first_char) = operand_text.chars().nth(0) {
-    //         if first_char == 'r' { // General purpose register
-
-    //              Err(ParsingError::new("NOT IMPLANTED", 0))
-    //         } else if first_char == 'p' { // Port register
-
-    //              Err(ParsingError::new("NOT IMPLANTED", 0))
-    //         } else {
-    //             // Integer value
-    //             let integer_value = match operand_text.parse::<i32>() {
-    //                 Ok(parsed_int) => Ok(Operand::IntegerValue(parsed_int)),
-    //                 Err(_) => Err(ParsingError::new("Parsing error", 0)),
-    //             };
-    //             integer_value
-    //         }
-    //     } else {
-    //         Err(ParsingError::new("Can't parse operand", 0))
-    //     }
-    // }
-
-    // pub fn parse2(&mut self, program_text: String) -> Result<Vec<Instruction>, ParsingError> {
-    //     let mut program: Vec<Instruction> = Vec::new();
-    //     let mut error: Option<ParsingError> = None;
-
-    //     let program_text_upper = program_text.to_ascii_uppercase();
-    //     let lines = program_text_upper.lines();
-    //     let mut current_line_number = 0;
-
-    //     for line in lines {
-    //         let words: Vec<&str> = line.split_whitespace().collect();
-    //         let instruction_word = words[0];
-    //         let operand_word = words[1].to_string();
-
-    //         let instruction: Result<Instruction, ParsingError> = match instruction_word {
-    //             "ADD" => !todo!(),
-    //             "SUB" => {
-
-    //                 let operand = self.parse_operand(operand_word, current_line_number);
-
-    //                 match operand {
-    //                     Ok(operand) => Ok(Instruction::new(Opcode::SUB(operand))),
-    //                     Err(error) => Err(error),
-    //                 }
-    //             }
-    //             "" => Err(ParsingError::new("Empty String", current_line_number)),
-    //             _ => Err(ParsingError::new("Unwon error", current_line_number)),
-    //         };
-    //         match instruction {
-    //             Ok(v) => program.push(v),
-    //             Err(err) => {
-    //                 error = Some(err);
-    //                 break;
-    //             },
-    //         }
-    //         current_line_number += 1;
-
-    //     }
-    //     let result = match error {
-    //         Some(e) => Err(e),
-    //         None => Ok(program),
-    //     };
-    //     result
-    // }
-
     pub fn parse(&mut self, program_text: &str) -> Result<Vec<Instruction>, ParsingError> {
-        let mut program: Vec<Instruction> = Vec::new();
+        let program_text = program_text.trim();
 
-        if program_text.is_empty() || program_text == "" {
-            let err = ParsingError::new("Empty Program", 0);
-            return Err(err);
+        if program_text.is_empty() {
+            return Err(ParsingError::new("Empty Program", 0));
         }
 
-        for (current_line_number, line) in program_text.lines().enumerate() {
-            let words: Vec<&str> = line.split_whitespace().collect();
+        let program: Result<Vec<Instruction>, ParsingError> = program_text
+            .lines()
+            .enumerate()
+            .map(|(current_line_number, line)| self.parse_instruction(line, current_line_number))
+            .collect();
 
-            let instruction_word = words[0];
-            let operand_word = words.get(1).unwrap_or(&"");
+        program
+    }
 
-            let instruction = match instruction_word.to_ascii_uppercase().as_str() {
-                "ADD" => Err(ParsingError::new(
-                    "ADD not implemented",
-                    current_line_number,
-                )),
-                "SUB" => {
-                    let operand = self.parse_operand(operand_word, current_line_number)?;
-                    Ok(Instruction::new(Opcode::SUB(operand)))
-                }
-                _ => Err(ParsingError::new("Unknown error", current_line_number)),
-            };
+    fn parse_label(&mut self, label: &str, line: usize) -> Result<Instruction, ParsingError> {
+        Err(ParsingError::new("Unknown error", line))
+    }
 
-            program.push(instruction?);
+    fn parse_instruction(
+        &mut self,
+        line: &str,
+        current_line_number: usize,
+    ) -> Result<Instruction, ParsingError> {
+        let words: Vec<&str> = line.split_whitespace().collect();
+        let instruction_word = words[0];
+        let operands = &words[1..];
+
+        let instruction = match instruction_word.to_ascii_uppercase().as_str() {
+            "MOV" => self.parse_binary_instruction(Opcode::MOV, operands, current_line_number),
+
+            "ADD" => self.parse_unary_instruction(Opcode::ADD, operands, current_line_number),
+            "SUB" => self.parse_unary_instruction(Opcode::SUB, operands, current_line_number),
+            "MUL" => self.parse_unary_instruction(Opcode::MUL, operands, current_line_number),
+            "DIV" => self.parse_unary_instruction(Opcode::DIV, operands, current_line_number),
+            "MOD" => self.parse_unary_instruction(Opcode::MOD, operands, current_line_number),
+
+            "AND" => self.parse_unary_instruction(Opcode::AND, operands, current_line_number),
+            "OR" => self.parse_unary_instruction(Opcode::OR, operands, current_line_number),
+            "XOR" => self.parse_unary_instruction(Opcode::XOR, operands, current_line_number),
+            "NOT" => Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
+
+            "JE" => self.parse_unary_instruction(Opcode::SUB, operands, current_line_number),
+            "JL" => self.parse_unary_instruction(Opcode::SUB, operands, current_line_number),
+            "JG" => self.parse_unary_instruction(Opcode::SUB, operands, current_line_number),
+
+            "HLT" => Ok(Instruction::new(Opcode::HLT)),
+            "NOP" => Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
+            "SPL" => Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
+            label => self.parse_label(label, current_line_number), //_ => Err(ParsingError::new("Unknown error", current_line_number)),
+        };
+
+        instruction
+    }
+
+    fn parse_binary_instruction(
+        &mut self,
+        opcode: fn(Operand, Operand) -> Opcode,
+        operands: &[&str],
+        current_line_number: usize,
+    ) -> Result<Instruction, ParsingError> {
+        if operands.len() != 2 {
+            return Err(ParsingError::new(
+                "Binary instructions requires exactly 2 operands",
+                current_line_number,
+            ));
+        }
+        let operand1 = self.parse_operand(operands[0], current_line_number, false)?;
+        let operand2 = self.parse_operand(operands[1], current_line_number, true)?;
+        Ok(Instruction::new(opcode(operand1, operand2)))
+    }
+
+    fn parse_unary_instruction(
+        &mut self,
+        opcode: fn(Operand) -> Opcode,
+        operands: &[&str],
+        current_line_number: usize,
+    ) -> Result<Instruction, ParsingError> {
+        if operands.len() != 1 {
+            return Err(ParsingError::new(
+                "Single operand instruction requires exactly 1 operand",
+                current_line_number,
+            ));
         }
 
-        Ok(program)
+        let operand = self.parse_operand(operands[0], current_line_number, false)?;
+        Ok(Instruction::new(opcode(operand)))
     }
 }
 
@@ -185,7 +183,7 @@ mod test {
     fn test_parsing_operand_empty() {
         let mut assembler = Assembler::new();
 
-        let result = assembler.parse_operand("", 0);
+        let result = assembler.parse_operand("", 0, false);
 
         assert!(result.is_err());
 
@@ -203,26 +201,22 @@ mod test {
 
         println!("_________________________________________________________");
         for register in registers.iter() {
-            let result = assembler.parse_operand(&register, 0);
+            let result = assembler.parse_operand(&register, 0, false);
 
             assert!(result.is_ok());
             println!("{:?}", result.unwrap());
-
         }
         println!("_________________________________________________________");
-
     }
 
     #[test]
     fn test_parsing_operand_in_correct_registers() {
         let mut assembler = Assembler::new();
 
-        let registers = vec!["r-1",  "r4", "rp", "pr", "p-3, p10"];
+        let registers = vec!["r-1", "r4", "rp", "pr", "p-3, p10"];
 
         for register in registers.iter() {
-            let result = assembler.parse_operand(&register, 0);
-
-           
+            let result = assembler.parse_operand(&register, 0, false);
 
             assert!(result.is_err());
         }
@@ -235,7 +229,7 @@ mod test {
         let registers = vec!["r0", "r1", "r2", "r3", "p0", "p1", "p2", "p3"];
 
         for register in registers.iter() {
-            let result = assembler.parse_operand(&register, 0);
+            let result = assembler.parse_operand(&register, 0, false);
 
             assert!(result.is_ok());
 
@@ -261,5 +255,81 @@ mod test {
         println!("____________________________________");
 
         assert_eq!(err.message, "Empty Program")
+    }
+
+    #[test]
+    fn test_parsing_sub() {
+        let program_text = r#"
+            SUB 10
+            SUB r1
+            SUB p2
+            SUB -100
+        "#;
+
+        let mut assembler = Assembler::new();
+
+        let result = assembler.parse(program_text);
+
+        assert!(result.is_ok());
+
+        let program = result.unwrap();
+
+        let expected = vec![
+            Instruction::new(Opcode::SUB(Operand::IntegerValue(10))),
+            Instruction::new(Opcode::SUB(Operand::GeneralRegister(1))),
+            Instruction::new(Opcode::SUB(Operand::PortRegister(2))),
+            Instruction::new(Opcode::SUB(Operand::IntegerValue(-100))),
+        ];
+
+        assert_eq!(program, expected);
+    }
+
+    #[test]
+    fn test_parsing_sub_inlaid_register() {
+        println!("__________HERE__________");
+        let program_text = r#"
+            SUB 10
+            SUB r1
+            SUB p4
+        "#;
+
+        let mut assembler = Assembler::new();
+
+        let result = assembler.parse(program_text);
+
+        assert!(result.is_err());
+    }
+    #[test]
+    fn test_parsing_sub_invalid_num_of_parameters() {
+        let program_text = r#"
+        SUB 2 p1
+    "#;
+
+        let mut assembler = Assembler::new();
+
+        let result = assembler.parse(program_text);
+
+        assert!(result.is_err());
+
+        let err = result.unwrap_err();
+
+        println!("{}", err);
+    }
+
+    #[test]
+    fn test_parsing_mov_invalid_num_parameters() {
+        let program_text = r#"
+            MOV 10
+        "#;
+
+        let mut assembler = Assembler::new();
+
+        let result = assembler.parse(program_text);
+
+        assert!(result.is_err());
+
+        let err = result.unwrap_err();
+
+        println!("{}", err);
     }
 }
