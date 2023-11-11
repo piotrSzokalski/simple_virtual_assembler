@@ -34,6 +34,8 @@ pub enum Opcode {
     XOR(Operand),
     /// NOT acc
     NOT,
+    /// Compare
+    CMP(Operand, Operand),
     /// Jum to label
     JMP(String, JMPCondition),
     /// Jump to label if equal

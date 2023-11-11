@@ -2,7 +2,12 @@
 
 use std::collections::HashMap;
 
-use crate::{flag::Flag, instruction::Instruction, opcodes::{Opcode, JMPCondition}, operand::Operand};
+use crate::{
+    flag::Flag,
+    instruction::Instruction,
+    opcodes::{JMPCondition, Opcode},
+    operand::Operand,
+};
 
 pub struct VirtualMachine {
     /// Program counter register
@@ -17,8 +22,8 @@ pub struct VirtualMachine {
     p: [i32; 4],
     /// Vector of instructions to be executed
     program: Vec<Instruction>,
-    // Labels used for jumps
-    labels: HashMap<String, usize>
+    /// Labels used for jumps
+    labels: HashMap<String, usize>,
 }
 
 impl VirtualMachine {
@@ -59,14 +64,6 @@ impl VirtualMachine {
                 true
             }
             Operand::IntegerValue(_) => panic!(),
-            // Register::PORT(i) => {
-            //     index = i;
-            //     true
-            // }
-            // Register::GENERAL(i) => {
-            //     index = i;
-            //     false
-            // }
         };
         if index > 3 {
             panic!();
@@ -93,22 +90,6 @@ impl VirtualMachine {
                     self.r[index] = self.r[i];
                 }
             }
-            // Operand::REGISTER(register) => match register {
-            //     Register::GENERAL(i) => {
-            //         if move_to_port {
-            //             self.p[index] = self.r[i];
-            //         } else {
-            //             self.r[index] = self.r[i]
-            //         }
-            //     }
-            //     Register::PORT(i) => {
-            //         if move_to_port {
-            //             self.p[index] = self.p[i];
-            //         } else {
-            //             self.r[index] = self.p[i];
-            //         }
-            //     }
-            // },
         }
     }
 
@@ -117,7 +98,7 @@ impl VirtualMachine {
     /// ### Arguments
     ///
     /// * 'Operand' - i32 or Register
-    /// * 'operation' - closure taking to two parameters acc and operand
+    /// * 'operation' - closure taking to two parameters: acc and operand
     ///
     /// ### Example
     ///
@@ -147,15 +128,16 @@ impl VirtualMachine {
 
     /// Adds label unless it is already declared
     pub fn add_label(&mut self, name: String) {
-        if ! self.labels.contains_key(&name) {
+        if !self.labels.contains_key(&name) {
             self.labels.insert(name, self.pc);
         }
     }
 
+    /// Jumps to label
     pub fn jump_to_label(&mut self, label: &str, condition: JMPCondition) {
         if let Some(&jmp_to) = self.labels.get(label) {
             match (self.flag, condition) {
-                (Flag::ZERO, JMPCondition::EQ) => {},
+                (Flag::ZERO, JMPCondition::EQ) => {}
                 (Flag::EQUAL, JMPCondition::EQ) => self.pc = jmp_to,
                 (Flag::GREATER, JMPCondition::GRT) => self.pc = jmp_to,
                 (Flag::LESSER, JMPCondition::LST) => self.pc = jmp_to,
@@ -163,7 +145,29 @@ impl VirtualMachine {
             }
         }
     }
-    
+
+    /// Compares operands
+    pub fn compare(&mut self, operand1: Operand, operand2: Operand) {
+        let value1 = match operand1 {
+            Operand::IntegerValue(value) => value,
+            Operand::GeneralRegister(index) => self.r[index],
+            Operand::PortRegister(index) => self.p[index],
+        };
+
+        let value2 = match operand2 {
+            Operand::IntegerValue(value) => value,
+            Operand::GeneralRegister(index) => self.r[index],
+            Operand::PortRegister(index) => self.p[index],
+        };
+
+        let result = value1 - value2;
+        match result {
+            0 => self.flag = Flag::EQUAL,
+            n if n < 0 => self.flag = Flag::LESSER,
+            n if n > 0 => self.flag = Flag::GREATER,
+            _ => unreachable!(),
+        }
+    }
 
     /// Fetches next instruction from the program and increments program counter by one
     pub fn fetch(&mut self) -> Instruction {
@@ -177,36 +181,34 @@ impl VirtualMachine {
             return false;
         }
         let instruction = self.fetch();
-     
+
         match instruction {
-            Instruction::Opcode(opcode) => {
-                match opcode {
-                    Opcode::HLT => {
-                        println!("HLT encountered");
-                        return false;
-                    }
-                    Opcode::NOP => todo!(),
-                    Opcode::MOV(o1, o2) => self.move_operand(o1, o2),
-                    Opcode::SPL(_) => todo!(),
-                    Opcode::ADD(operand) => self.apply_operation(operand, |a, b| a + b),
-                    Opcode::SUB(operand) => self.apply_operation(operand, |a, b| a - b),
-                    Opcode::MUL(operand) => self.apply_operation(operand, |a, b| a * b),
-                    Opcode::DIV(operand) => self.apply_operation(operand, |a, b| a / b),
-                    Opcode::MOD(operand) => self.apply_operation(operand, |a, b| a % b),
-                    Opcode::AND(operand) => self.apply_operation(operand, |a, b| a & b),
-                    Opcode::OR(operand) => self.apply_operation(operand, |a, b| a | b),
-                    Opcode::XOR(operand) => self.apply_operation(operand, |a, b| a ^ b),
-                    Opcode::NOT => self.acc = !self.acc,
-                    Opcode::JE(_) => todo!(),
-                    Opcode::JL(_) => todo!(),
-                    Opcode::JG(_) => todo!(),
-                    Opcode::JMP(name, condition) => self.jump_to_label(&name, condition),
+            Instruction::Opcode(opcode) => match opcode {
+                Opcode::HLT => {
+                    println!("HLT encountered");
+                    return false;
                 }
+                Opcode::NOP => todo!(),
+                Opcode::MOV(operand1, operand2) => self.move_operand(operand1, operand2),
+                Opcode::SPL(_) => todo!(),
+                Opcode::ADD(operand) => self.apply_operation(operand, |a, b| a + b),
+                Opcode::SUB(operand) => self.apply_operation(operand, |a, b| a - b),
+                Opcode::MUL(operand) => self.apply_operation(operand, |a, b| a * b),
+                Opcode::DIV(operand) => self.apply_operation(operand, |a, b| a / b),
+                Opcode::MOD(operand) => self.apply_operation(operand, |a, b| a % b),
+                Opcode::AND(operand) => self.apply_operation(operand, |a, b| a & b),
+                Opcode::OR(operand) => self.apply_operation(operand, |a, b| a | b),
+                Opcode::XOR(operand) => self.apply_operation(operand, |a, b| a ^ b),
+                Opcode::NOT => self.acc = !self.acc,
+                Opcode::CMP(operand1, operand2) => self.compare(operand1, operand2),
+                Opcode::JE(_) => todo!(),
+                Opcode::JL(_) => todo!(),
+                Opcode::JG(_) => todo!(),
+                Opcode::JMP(name, condition) => self.jump_to_label(&name, condition),
             },
             Instruction::Label(name) => self.add_label(name),
         }
 
-        
         true
     }
 
@@ -244,7 +246,10 @@ mod tests {
         let mut vm = VirtualMachine::new(program);
         let _i1 = vm.fetch();
         let i2 = vm.fetch();
-        assert_eq!(i2.get_opcode().unwrap(), Opcode::SUB(Operand::IntegerValue(10)));
+        assert_eq!(
+            i2.get_opcode().unwrap(),
+            Opcode::SUB(Operand::IntegerValue(10))
+        );
     }
 
     #[test]
@@ -342,11 +347,75 @@ mod tests {
         assert_eq!(vm.p[2], 7);
     }
 
+    #[test]
+    fn test_vm_cmp() {
+        // MOV 10 r1
+        // MOV 12 p0
+        // MOV 12 p3
+
+        // CPM r1 p0    (10, 12)
+        // Flag should be set to Lesser
+
+        // CMP p0 p3    (12, 12)
+        // Flag should be set to Equal
+
+        // CPM p0 r1    (12, 10)
+        // Flag should be set to Greater
+
+        let program = vec![
+            Instruction::new(Opcode::MOV(
+                Operand::IntegerValue(10),
+                Operand::GeneralRegister(1),
+            )),
+            Instruction::new(Opcode::MOV(
+                Operand::IntegerValue(12),
+                Operand::PortRegister(0),
+            )),
+            Instruction::new(Opcode::MOV(
+                Operand::IntegerValue(12),
+                Operand::PortRegister(3),
+            )),
+            // CPM r1 p0
+            Instruction::new(Opcode::CMP(
+                Operand::GeneralRegister(1),
+                Operand::PortRegister(0),
+            )),
+            // CMP p0 p3 
+            Instruction::new(Opcode::CMP(
+                Operand::PortRegister(0),
+                Operand::PortRegister(3),
+            )),
+            // CMP p0 r1
+            Instruction::new(Opcode::CMP(
+                Operand::PortRegister(0),
+                Operand::GeneralRegister(1),
+            )),
+            Instruction::new(Opcode::HLT),
+        ];
+        let mut vm = VirtualMachine::new(program);
+        vm.execute();
+        vm.execute();
+        vm.execute();
+        
+
+        println!("_________________________________________");
+        vm.execute();
+        println!("{:?}", vm.flag);
+        assert_eq!(vm.flag, Flag::LESSER);
+
+        vm.execute();
+        println!("{:?}", vm.flag);
+        assert_eq!(vm.flag, Flag::EQUAL);
+
+        vm.execute();
+        println!("{:?}", vm.flag);
+        assert_eq!(vm.flag, Flag::GREATER);
+        
+    }
 
     // FLAGS ARE NOT YET USED
     // #[test]
     // fn test_vm_labels_jumping() {
-
 
     //     let program = vec![
     //         Instruction::new(Opcode::ADD(Operand::IntegerValue(100))),
@@ -358,8 +427,6 @@ mod tests {
     //     assert_eq!(vm.acc, 20);
 
     //     panic!();
-
-    }
 }
 
 // Maszyna wirtualna posiada konfigurowalna liczbę rejestrów ogólnego użytku o domyślnych nazwach r0, r1, r2..,  oraz rejestrów pełniących rolę portów do komunikacji z zewnętrznymi peryferiami o domyślnych nazwach p0, p1, p2… .Poza tym będzie posiadać następujące rejestry specjalne:
