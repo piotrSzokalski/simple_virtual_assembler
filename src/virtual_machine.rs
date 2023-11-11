@@ -88,58 +88,6 @@ impl VirtualMachine {
         }
     }
 
-    /// Copies operand into register
-    /// ### Arguments
-    ///
-    /// * Operand - i32 or register
-    /// * Register - register
-    ///
-    fn move_operand2(&mut self, operand1: Operand, operand2: Operand) {
-        let index;
-        let move_to_port = match operand2 {
-            Operand::GeneralRegister(i) => {
-                index = i;
-                false
-            }
-
-            Operand::PortRegister(i) => {
-                index = i;
-                true
-            }
-            Operand::IntegerValue(_) => panic!(),
-            Operand::ACC => todo!(),
-            Operand::PC => todo!(),
-        };
-        if index > 3 {
-            panic!();
-        }
-        match operand1 {
-            Operand::IntegerValue(value) => {
-                if move_to_port {
-                    self.p[index] = value;
-                } else {
-                    self.r[index] = value;
-                }
-            }
-            Operand::PortRegister(i) => {
-                if move_to_port {
-                    self.p[index] = self.p[i];
-                } else {
-                    self.r[index] = self.p[i]
-                }
-            }
-            Operand::GeneralRegister(i) => {
-                if move_to_port {
-                    self.p[index] = self.r[i];
-                } else {
-                    self.r[index] = self.r[i];
-                }
-            }
-            Operand::ACC => todo!(),
-            Operand::PC => todo!(),
-        }
-    }
-
     /// apply operation on acc
     ///
     /// ### Arguments
