@@ -6,7 +6,11 @@ pub enum Operand {
     /// General register address/index r0, r1, r2, r3
     GeneralRegister(usize),
     /// Port register used for I/O p0, p1, p2, p3
-    PortRegister(usize)
+    PortRegister(usize),
+    /// Accumulator register
+    ACC,
+    /// Program counter register
+    PC
 }
 
 impl Operand {

@@ -1,6 +1,6 @@
 //use std::collections::btree_map::Values;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::IndexMut};
 
 use crate::{
     flag::Flag,
@@ -52,6 +52,49 @@ impl VirtualMachine {
     /// * Register - register
     ///
     fn move_operand(&mut self, operand1: Operand, operand2: Operand) {
+        match (operand1, operand2) {
+            (Operand::IntegerValue(_), Operand::IntegerValue(_)) => unreachable!(),
+
+            (Operand::IntegerValue(value), Operand::GeneralRegister(index)) => self.r[index] = value,
+            (Operand::IntegerValue(value), Operand::PortRegister(index)) => self.p[index] = value,
+            (Operand::IntegerValue(value), Operand::ACC) => self.acc = value,
+            (Operand::IntegerValue(value), Operand::PC) => self.pc = value as usize, //TODO
+
+            (Operand::GeneralRegister(_), Operand::IntegerValue(_)) => unreachable!(),
+            (Operand::GeneralRegister(index), Operand::GeneralRegister(index2)) => self.r[index2] = self.r[index],
+            (Operand::GeneralRegister(index), Operand::PortRegister(index2)) => self.p[index2] = self.r[index],
+            (Operand::GeneralRegister(index), Operand::ACC) => self.acc = self.r[index],
+            (Operand::GeneralRegister(index), Operand::PC) => self.pc = self.r[index] as usize,
+
+            (Operand::PortRegister(_), Operand::IntegerValue(_)) => unreachable!(),
+            (Operand::PortRegister(index), Operand::GeneralRegister(index2)) => self.r[index2] = self.p[index],
+            (Operand::PortRegister(index), Operand::PortRegister(index2)) => self.p[index2] = self.p[index],
+            (Operand::PortRegister(index), Operand::ACC) => self.acc = self.p[index],
+            (Operand::PortRegister(index), Operand::PC) => self.pc = self.p[index] as usize,
+
+            (Operand::ACC, Operand::IntegerValue(_)) => unreachable!(),
+            (Operand::ACC, Operand::GeneralRegister(index)) => self.r[index] = self.acc,
+            (Operand::ACC, Operand::PortRegister(index)) => self.p[index] = self.acc,
+            (Operand::ACC, Operand::ACC) => self.acc = self.acc,
+            (Operand::ACC, Operand::PC) => self.pc = self.acc as usize,
+            
+            (Operand::PC, Operand::IntegerValue(_)) => unreachable!(),
+            (Operand::PC, Operand::GeneralRegister(index)) => self.r[index] = self.pc as i32,
+            (Operand::PC, Operand::PortRegister(index)) => self.p[index] = self.pc as i32,
+            (Operand::PC, Operand::ACC) => self.acc = self.pc as i32,
+            (Operand::PC, Operand::PC) => self.pc = self.pc,
+
+            _=> unreachable!(),
+        }
+    }
+
+    /// Copies operand into register
+    /// ### Arguments
+    ///
+    /// * Operand - i32 or register
+    /// * Register - register
+    ///
+    fn move_operand2(&mut self, operand1: Operand, operand2: Operand) {
         let index;
         let move_to_port = match operand2 {
             Operand::GeneralRegister(i) => {
@@ -64,6 +107,8 @@ impl VirtualMachine {
                 true
             }
             Operand::IntegerValue(_) => panic!(),
+            Operand::ACC => todo!(),
+            Operand::PC => todo!(),
         };
         if index > 3 {
             panic!();
@@ -90,6 +135,8 @@ impl VirtualMachine {
                     self.r[index] = self.r[i];
                 }
             }
+            Operand::ACC => todo!(),
+            Operand::PC => todo!(),
         }
     }
 
@@ -115,14 +162,8 @@ impl VirtualMachine {
             }
             Operand::GeneralRegister(index) => self.acc = operation(self.acc, self.r[index]),
             Operand::PortRegister(index) => self.acc = operation(self.acc, self.p[index]),
-            // Operand::REGISTER(register) => match register {
-            //     Register::GENERAL(index) => {
-            //         self.acc = operation(self.acc, self.r[index]);
-            //     }
-            //     Register::PORT(index) => {
-            //         self.acc = operation(self.acc, self.p[index]);
-            //     }
-            // },
+            Operand::ACC => self.acc = operation(self.acc, self.acc),
+            Operand::PC => self.acc = operation(self.acc, self.pc as i32),
         }
     }
 
@@ -152,12 +193,16 @@ impl VirtualMachine {
             Operand::IntegerValue(value) => value,
             Operand::GeneralRegister(index) => self.r[index],
             Operand::PortRegister(index) => self.p[index],
+            Operand::ACC => self.acc,
+            Operand::PC => self.pc as i32,
         };
 
         let value2 = match operand2 {
             Operand::IntegerValue(value) => value,
             Operand::GeneralRegister(index) => self.r[index],
             Operand::PortRegister(index) => self.p[index],
+            Operand::ACC => self.acc,
+            Operand::PC => self.pc as i32,
         };
 
         let result = value1 - value2;
@@ -188,7 +233,7 @@ impl VirtualMachine {
                     println!("HLT encountered");
                     return false;
                 }
-                Opcode::NOP => todo!(),
+                Opcode::NOP => {},
                 Opcode::MOV(operand1, operand2) => self.move_operand(operand1, operand2),
                 Opcode::SPL(_) => todo!(),
                 Opcode::ADD(operand) => self.apply_operation(operand, |a, b| a + b),
@@ -411,6 +456,37 @@ mod tests {
         println!("{:?}", vm.flag);
         assert_eq!(vm.flag, Flag::GREATER);
         
+    }
+
+    #[test]
+    fn test_vm_acc_and_pc_operations() {
+        // MOV 10 acc   PC = 1
+        // NOP          PC = 2
+        // NOP          PC = 3
+        // NOP          PC = 4
+        // NOP          PC = 5
+        // NOP          PC = 6
+        // ADD pc       PC = 7 then  Acc = 10 + 7
+        // HLT
+
+        // Expected result acc = 17
+
+        let program = vec![
+            Instruction::new(Opcode::MOV(Operand::IntegerValue(10), Operand::ACC)),
+            Instruction::new(Opcode::NOP),
+            Instruction::new(Opcode::NOP),
+            Instruction::new(Opcode::NOP),
+            Instruction::new(Opcode::NOP),
+            Instruction::new(Opcode::NOP),
+            Instruction::new(Opcode::ADD(Operand::PC)),
+            Instruction::new(Opcode::HLT)
+        ];
+
+        let mut vm = VirtualMachine::new(program);
+        vm.run();
+
+        assert_eq!(vm.acc, 17);
+
     }
 
     // FLAGS ARE NOT YET USED
