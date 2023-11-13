@@ -1,5 +1,6 @@
 use std::error;
 use std::fmt;
+use std::ops::IndexMut;
 
 use crate::{instruction::Instruction, opcodes::Opcode, operand::Operand};
 
@@ -44,45 +45,82 @@ impl Assembler {
         if operand_text.is_empty() {
             return Err(ParsingError::new("Empty operand", 0));
         }
-
-        let first_char = operand_text.chars().nth(0).unwrap();
         let remaining_text = &operand_text[1..];
 
-        match first_char {
-            'r' => match remaining_text.parse::<usize>() {
-                Ok(register_number) => {
-                    if register_number > 3 {
-                        Err(ParsingError::new("Invalid port number", line))
-                    } else {
-                        Ok(Operand::GeneralRegister(
-                            register_number.try_into().unwrap(),
-                        ))
+        match operand_text {
+            "acc" => {
+                return Ok(Operand::ACC);
+            }
+            "pc" => {
+                return Ok(Operand::PC);
+            }
+            r if r.starts_with('r') => {
+                if let Ok(index) = remaining_text.parse::<usize>() {
+                    if index > 3 {
+                        return Err(ParsingError::new("Invalid port number", line));
                     }
+                    return Ok(Operand::GeneralRegister(index.try_into().unwrap()));
                 }
-                _ => Err(ParsingError::new("Invalid register number", line)),
-            },
-            'p' => match remaining_text.parse::<usize>() {
-                Ok(port_number) => {
-                    if port_number > 3 {
-                        Err(ParsingError::new("Invalid port number", line))
-                    } else {
-                        Ok(Operand::PortRegister(port_number))
+                return Err(ParsingError::new("Invalid port number", line));
+            }
+            p if p.starts_with('p') => {
+                if let Ok(index) = remaining_text.parse::<usize>() {
+                    if index > 3 {
+                        return Err(ParsingError::new("Invalid port number", line));
                     }
+                    return Ok(Operand::PortRegister(index.try_into().unwrap()));
                 }
-                _ => Err(ParsingError::new("Invalid port number", line)),
-            },
-            _ => match operand_text.parse::<i32>() {
-                Ok(parsed_int) => {
-                    if register_only {
-                        Err(ParsingError::new("This operand can't be integer ", line))
-                    } else {
-                        Ok(Operand::IntegerValue(parsed_int))
-                    }
+                return Err(ParsingError::new("Invalid port number", line));
+            }
+
+            decimal if decimal.chars().all(|c| c.is_numeric() || (c == '-' && decimal.starts_with('-'))) => {
+                if register_only {
+                    return Err(ParsingError::new(
+                        "Can't parse numeric, this operand must be a register",
+                        line,
+                    ));
                 }
-                Err(v) => Err(ParsingError::new("Can't parse integer", line)),
-            },
+                if let Ok(decimal) = decimal.parse::<i32>() {
+                    return Ok(Operand::IntegerValue(decimal));
+                }
+                return Err(ParsingError::new(
+                    "Can't parse numeric literal operand",
+                    line,
+                ));
+            }
+            binary if binary.starts_with("0b") => {
+                if register_only {
+                    return Err(ParsingError::new(
+                        "Can't parse binary literal, this operand must be a register",
+                        line,
+                    ));
+                }
+                if let Ok(binary) = i32::from_str_radix(&binary[2..], 2) {
+                    return Ok(Operand::IntegerValue(binary));
+                }
+                return Err(ParsingError::new("Can't binary literal operand", line));
+            }
+
+            hex if hex.starts_with("0x")=> {
+                if register_only {
+                    return Err(ParsingError::new(
+                        "Can't parse hexadecimal literal, this operand must be a register",
+                        line,
+                    ));
+                }
+                if let Ok(hex) = i32::from_str_radix(&hex[2..], 16) {
+                    return Ok(Operand::IntegerValue(hex));
+                }
+                return Err(ParsingError::new("Can't hexadecimal literal operand", line));
+            }
+
+            _ => Err(ParsingError::new(
+                "Can't parse operand, unknown operand",
+                line,
+            )),
         }
     }
+
 
     pub fn parse(&mut self, program_text: &str) -> Result<Vec<Instruction>, ParsingError> {
         let program_text = program_text.trim();
@@ -99,11 +137,15 @@ impl Assembler {
 
         program
     }
-    // TODO return error if label is already in use 
+    // TODO return error if label is already in use
+    /// Parses label
+    ///
+    /// ### Arguments
+    /// * 'name' &str - name of label
+    /// * 'line' usize - line number
     fn parse_label(&mut self, name: &str, line: usize) -> Result<Instruction, ParsingError> {
-        
         Ok(Instruction::new_label(name.to_string()))
-        
+
         //Err(ParsingError::new("Unknown error", line))
     }
 
@@ -130,9 +172,9 @@ impl Assembler {
             "XOR" => self.parse_unary_instruction(Opcode::XOR, operands, current_line_number),
             "NOT" => Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
 
-            "JE" => self.parse_unary_instruction(Opcode::SUB, operands, current_line_number),
-            "JL" => self.parse_unary_instruction(Opcode::SUB, operands, current_line_number),
-            "JG" => self.parse_unary_instruction(Opcode::SUB, operands, current_line_number),
+            "JE" => self.parse_jump(Opcode::JE, operands, current_line_number),
+            "JL" => self.parse_jump(Opcode::JL, operands, current_line_number),
+            "JG" => self.parse_jump(Opcode::JG, operands, current_line_number),
 
             "HLT" => Ok(Instruction::new(Opcode::HLT)),
             "NOP" => Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
@@ -148,16 +190,16 @@ impl Assembler {
         &mut self,
         opcode: fn(Operand, Operand) -> Opcode,
         operands: &[&str],
-        current_line_number: usize,
+        line: usize,
     ) -> Result<Instruction, ParsingError> {
         if operands.len() != 2 {
             return Err(ParsingError::new(
                 "Binary instructions requires exactly 2 operands",
-                current_line_number,
+                line,
             ));
         }
-        let operand1 = self.parse_operand(operands[0], current_line_number, false)?;
-        let operand2 = self.parse_operand(operands[1], current_line_number, true)?;
+        let operand1 = self.parse_operand(operands[0], line, false)?;
+        let operand2 = self.parse_operand(operands[1], line, true)?;
         Ok(Instruction::new(opcode(operand1, operand2)))
     }
 
@@ -165,20 +207,32 @@ impl Assembler {
         &mut self,
         opcode: fn(Operand) -> Opcode,
         operands: &[&str],
-        current_line_number: usize,
+        line: usize,
     ) -> Result<Instruction, ParsingError> {
         if operands.len() != 1 {
             return Err(ParsingError::new(
                 "Single operand instruction requires exactly 1 operand",
-                current_line_number,
+                line,
             ));
         }
 
-        let operand = self.parse_operand(operands[0], current_line_number, false)?;
+        let operand = self.parse_operand(operands[0], line, false)?;
         Ok(Instruction::new(opcode(operand)))
     }
-}
 
+    fn parse_jump(
+        &mut self,
+        opcode: fn(String) -> Opcode,
+        operands: &[&str],
+        line: usize,
+    ) -> Result<Instruction, ParsingError> {
+        if operands.len() != 2 {
+            return Err(ParsingError::new("Can jump to empty label", line));
+        }
+        let label = operands[0];
+        Ok(Instruction::new(opcode(label.to_string())))
+    }
+}
 #[cfg(test)]
 mod test {
     use super::*;
@@ -191,10 +245,10 @@ mod test {
 
         assert!(result.is_err());
 
-        let err = result.unwrap_err();
-        println!("____________________________________");
-        println!("{}", err);
-        println!("____________________________________");
+        // let err = result.unwrap_err();
+        // println!("____________________________________");
+        // println!("{}", err);
+        // println!("____________________________________");
     }
 
     #[test]
@@ -203,14 +257,14 @@ mod test {
 
         let registers = vec!["r0", "r1", "r2", "r3", "p0", "p1", "p2", "p3"];
 
-        println!("_________________________________________________________");
+        //println!("_________________________________________________________");
         for register in registers.iter() {
             let result = assembler.parse_operand(&register, 0, false);
 
             assert!(result.is_ok());
-            println!("{:?}", result.unwrap());
+            //println!("{:?}", result.unwrap());
         }
-        println!("_________________________________________________________");
+        //println!("_________________________________________________________");
     }
 
     #[test]
@@ -289,8 +343,60 @@ mod test {
     }
 
     #[test]
+    fn test_parsing_different_base_integers() {
+        let program_text = r#"
+        ADD -7
+        ADD 0xAF
+        ADD 0b101
+
+    "#;
+        let mut assembler = Assembler::new();
+        let result = assembler.parse(program_text);
+
+        // match result {
+        //     Ok(res) => println!("{:?}", res),
+        //     Err(err) => println!("{:?}", err),
+        // }
+
+        let expected = vec![
+            Instruction::new(Opcode::ADD(Operand::IntegerValue(-7))),
+            Instruction::new(Opcode::ADD(Operand::IntegerValue(175))),
+            Instruction::new(Opcode::ADD(Operand::IntegerValue(5))),
+        ];
+
+        assert_eq!(result.unwrap(), expected); 
+    }
+
+    #[test]
+    fn test_parsing_invalid_different_base_integers() {
+        let program_text = r#"
+        ADD -7
+        ADD 0xAF
+        ADD 0b1013
+
+        "#;
+        let mut assembler = Assembler::new();
+        let result = assembler.parse(program_text);
+
+        
+        assert!(result.is_err());
+
+
+        let program_text = r#"
+        ADD -7
+        ADD AF
+        "#;
+        
+
+        let mut assembler = Assembler::new();
+        let result = assembler.parse(program_text);
+
+        
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn test_parsing_sub_inlaid_register() {
-        println!("__________HERE__________");
         let program_text = r#"
             SUB 10
             SUB r1
@@ -306,8 +412,8 @@ mod test {
     #[test]
     fn test_parsing_sub_invalid_num_of_parameters() {
         let program_text = r#"
-        SUB 2 p1
-    "#;
+            SUB 2 p1
+        "#;
 
         let mut assembler = Assembler::new();
 
@@ -317,7 +423,7 @@ mod test {
 
         let err = result.unwrap_err();
 
-        println!("{}", err);
+        //println!("{}", err);
     }
 
     #[test]
@@ -334,6 +440,44 @@ mod test {
 
         let err = result.unwrap_err();
 
-        println!("{}", err);
+        //println!("{}", err);
+    }
+
+    #[test]
+    fn test_parsing_mov() {
+        let program_text = r#"
+            MOV r1 r2
+            MOV 540999 acc
+            
+        "#;
+
+        let mut assembler = Assembler::new();
+
+        let result = assembler.parse(program_text);
+
+        println!("________________________________________________---");
+        match result {
+            Ok(v) => println!("{:?}", v),
+            Err(e) => println!("{:?}", e),
+        }
+    }
+
+    #[test]
+    fn test_parsing_labels() {
+        let program_text = r#"
+        loop:
+            ADD 8
+            MOV 10 ACC
+        "#;
+
+        let mut assembler = Assembler::new();
+
+        let result = assembler.parse(program_text);
+
+        println!("________________________________________________---");
+        match result {
+            Ok(v) => println!("{:?}", v),
+            Err(e) => println!("{:?}", e),
+        }
     }
 }

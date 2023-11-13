@@ -62,7 +62,7 @@ impl VirtualMachine {
             }
             (Operand::IntegerValue(value), Operand::PortRegister(index)) => self.p[index] = value,
             (Operand::IntegerValue(value), Operand::ACC) => self.acc = value,
-            (Operand::IntegerValue(value), Operand::PC) => self.pc = value as usize, //TODO
+            (Operand::IntegerValue(value), Operand::PC) => self.pc = value as usize,
 
             (Operand::GeneralRegister(_), Operand::IntegerValue(_)) => unreachable!(),
             (Operand::GeneralRegister(index), Operand::GeneralRegister(index2)) => {
@@ -443,17 +443,15 @@ mod tests {
         assert_eq!(vm.acc, 17);
     }
 
-    
     #[test]
     fn test_vm_labels_jumping() {
-
         //                      # Divide 20 by 5 without div operator
         // mov 20 r0            # Set (r0) initial value to 20
         // mov 5 r1             # Set (r1) devisor to 5
         // mov 0 r2             # Set (r2) counter to 0
         // loop:                # Label for looping
         //      mov r0 acc      # Mov to acc
-        //      sub r1          # Subtract devisor 
+        //      sub r1          # Subtract devisor
         //      mov acc r0      # Copy result
         //      mov r2  acc     # Copy counter value to accumulator
         //      add 1           # Increment accumulator by 1
@@ -462,7 +460,7 @@ mod tests {
         //      JG loop         # Jump if current value is grater that 0
         // hlt
 
-        // Expected result acc = 0, r2 = 4
+        // Expected result r2 = 4
 
         let program = vec![
             Instruction::new(Opcode::MOV(
@@ -477,33 +475,30 @@ mod tests {
                 Operand::IntegerValue(0),
                 Operand::GeneralRegister(2),
             )),
-
             Instruction::new_label("loop".to_string()),
-
             Instruction::new(Opcode::MOV(Operand::GeneralRegister(0), Operand::ACC)),
             Instruction::new(Opcode::SUB(Operand::GeneralRegister(1))),
             Instruction::new(Opcode::MOV(Operand::ACC, Operand::GeneralRegister(0))),
-
             Instruction::new(Opcode::MOV(Operand::GeneralRegister(2), Operand::ACC)),
             Instruction::new(Opcode::ADD(Operand::IntegerValue(1))),
             Instruction::new(Opcode::MOV(Operand::ACC, Operand::GeneralRegister(2))),
-
-            Instruction::new(Opcode::CMP(Operand::GeneralRegister(0), Operand::IntegerValue(0))),
+            Instruction::new(Opcode::CMP(
+                Operand::GeneralRegister(0),
+                Operand::IntegerValue(0),
+            )),
             Instruction::new(Opcode::JG("loop".to_string())),
-
             Instruction::new(Opcode::HLT),
         ];
         let mut vm = VirtualMachine::new(program);
         vm.run();
         // println!("______________________________");
-        
+
         // println!("{:?}", vm);
         // println!("______________________________");
 
         // println!("{:?}", vm.r[2]);
 
         assert_eq!(vm.r[2], 4);
-
     }
 }
 
