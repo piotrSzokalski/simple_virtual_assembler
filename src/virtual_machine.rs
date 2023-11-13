@@ -1,5 +1,7 @@
 //use std::collections::btree_map::Values;
 
+use std::fmt::{Display, Formatter, Result};
+
 use std::{collections::HashMap, ops::IndexMut};
 
 use crate::{
@@ -8,7 +10,7 @@ use crate::{
     opcodes::{JMPCondition, Opcode},
     operand::Operand,
 };
-
+#[derive(Debug)]
 pub struct VirtualMachine {
     /// Program counter register
     pc: usize,
@@ -55,20 +57,30 @@ impl VirtualMachine {
         match (operand1, operand2) {
             (Operand::IntegerValue(_), Operand::IntegerValue(_)) => unreachable!(),
 
-            (Operand::IntegerValue(value), Operand::GeneralRegister(index)) => self.r[index] = value,
+            (Operand::IntegerValue(value), Operand::GeneralRegister(index)) => {
+                self.r[index] = value
+            }
             (Operand::IntegerValue(value), Operand::PortRegister(index)) => self.p[index] = value,
             (Operand::IntegerValue(value), Operand::ACC) => self.acc = value,
             (Operand::IntegerValue(value), Operand::PC) => self.pc = value as usize, //TODO
 
             (Operand::GeneralRegister(_), Operand::IntegerValue(_)) => unreachable!(),
-            (Operand::GeneralRegister(index), Operand::GeneralRegister(index2)) => self.r[index2] = self.r[index],
-            (Operand::GeneralRegister(index), Operand::PortRegister(index2)) => self.p[index2] = self.r[index],
+            (Operand::GeneralRegister(index), Operand::GeneralRegister(index2)) => {
+                self.r[index2] = self.r[index]
+            }
+            (Operand::GeneralRegister(index), Operand::PortRegister(index2)) => {
+                self.p[index2] = self.r[index]
+            }
             (Operand::GeneralRegister(index), Operand::ACC) => self.acc = self.r[index],
             (Operand::GeneralRegister(index), Operand::PC) => self.pc = self.r[index] as usize,
 
             (Operand::PortRegister(_), Operand::IntegerValue(_)) => unreachable!(),
-            (Operand::PortRegister(index), Operand::GeneralRegister(index2)) => self.r[index2] = self.p[index],
-            (Operand::PortRegister(index), Operand::PortRegister(index2)) => self.p[index2] = self.p[index],
+            (Operand::PortRegister(index), Operand::GeneralRegister(index2)) => {
+                self.r[index2] = self.p[index]
+            }
+            (Operand::PortRegister(index), Operand::PortRegister(index2)) => {
+                self.p[index2] = self.p[index]
+            }
             (Operand::PortRegister(index), Operand::ACC) => self.acc = self.p[index],
             (Operand::PortRegister(index), Operand::PC) => self.pc = self.p[index] as usize,
 
@@ -77,14 +89,14 @@ impl VirtualMachine {
             (Operand::ACC, Operand::PortRegister(index)) => self.p[index] = self.acc,
             (Operand::ACC, Operand::ACC) => self.acc = self.acc,
             (Operand::ACC, Operand::PC) => self.pc = self.acc as usize,
-            
+
             (Operand::PC, Operand::IntegerValue(_)) => unreachable!(),
             (Operand::PC, Operand::GeneralRegister(index)) => self.r[index] = self.pc as i32,
             (Operand::PC, Operand::PortRegister(index)) => self.p[index] = self.pc as i32,
             (Operand::PC, Operand::ACC) => self.acc = self.pc as i32,
             (Operand::PC, Operand::PC) => self.pc = self.pc,
 
-            _=> unreachable!(),
+            _ => unreachable!(),
         }
     }
 
@@ -181,7 +193,7 @@ impl VirtualMachine {
                     println!("HLT encountered");
                     return false;
                 }
-                Opcode::NOP => {},
+                Opcode::NOP => {}
                 Opcode::MOV(operand1, operand2) => self.move_operand(operand1, operand2),
                 Opcode::SPL(_) => todo!(),
                 Opcode::ADD(operand) => self.apply_operation(operand, |a, b| a + b),
@@ -194,9 +206,11 @@ impl VirtualMachine {
                 Opcode::XOR(operand) => self.apply_operation(operand, |a, b| a ^ b),
                 Opcode::NOT => self.acc = !self.acc,
                 Opcode::CMP(operand1, operand2) => self.compare(operand1, operand2),
-                Opcode::JE(_) => todo!(),
-                Opcode::JL(_) => todo!(),
-                Opcode::JG(_) => todo!(),
+                Opcode::JE(name) => self.jump_to_label(&name, JMPCondition::EQ),
+                Opcode::JL(name) => self.jump_to_label(&name, JMPCondition::LST),
+                Opcode::JG(name) => self.jump_to_label(&name, JMPCondition::GRT),
+
+                // ?
                 Opcode::JMP(name, condition) => self.jump_to_label(&name, condition),
             },
             Instruction::Label(name) => self.add_label(name),
@@ -308,27 +322,22 @@ mod tests {
                 Operand::IntegerValue(12),
                 Operand::GeneralRegister(1),
             )),
-            //Instruction::new(Opcode::MOV(Operand::IntegerValue(12), Register::GENERAL(1))),
             Instruction::new(Opcode::MOV(
                 Operand::GeneralRegister(1),
                 Operand::GeneralRegister(2),
             )),
-            //Instruction::new(Opcode::MOV(Operand::REGISTER(Register::GENERAL(1)), Register::GENERAL(2))),
             Instruction::new(Opcode::MOV(
                 Operand::GeneralRegister(1),
                 Operand::PortRegister(1),
             )),
-            //Instruction::new(Opcode::MOV(Operand::REGISTER(Register::GENERAL(1)), Register::PORT(1))),
             Instruction::new(Opcode::MOV(
                 Operand::IntegerValue(7),
                 Operand::PortRegister(2),
             )),
-            //Instruction::new(Opcode::MOV(Operand::IntegerValue(7), Register::PORT(2))),
             Instruction::new(Opcode::MOV(
                 Operand::PortRegister(2),
                 Operand::GeneralRegister(1),
             )),
-            //Instruction::new(Opcode::MOV(Operand::REGISTER(Register::PORT(2)), Register::GENERAL(1))),
             Instruction::new(Opcode::HLT),
         ];
         // expected:  r1 = 7, r2 =  12, p1 = 12, p2 = 7
@@ -373,7 +382,7 @@ mod tests {
                 Operand::GeneralRegister(1),
                 Operand::PortRegister(0),
             )),
-            // CMP p0 p3 
+            // CMP p0 p3
             Instruction::new(Opcode::CMP(
                 Operand::PortRegister(0),
                 Operand::PortRegister(3),
@@ -389,7 +398,6 @@ mod tests {
         vm.execute();
         vm.execute();
         vm.execute();
-        
 
         println!("_________________________________________");
         vm.execute();
@@ -403,7 +411,6 @@ mod tests {
         vm.execute();
         println!("{:?}", vm.flag);
         assert_eq!(vm.flag, Flag::GREATER);
-        
     }
 
     #[test]
@@ -427,30 +434,77 @@ mod tests {
             Instruction::new(Opcode::NOP),
             Instruction::new(Opcode::NOP),
             Instruction::new(Opcode::ADD(Operand::PC)),
-            Instruction::new(Opcode::HLT)
+            Instruction::new(Opcode::HLT),
         ];
 
         let mut vm = VirtualMachine::new(program);
         vm.run();
 
         assert_eq!(vm.acc, 17);
-
     }
 
-    // FLAGS ARE NOT YET USED
-    // #[test]
-    // fn test_vm_labels_jumping() {
+    
+    #[test]
+    fn test_vm_labels_jumping() {
 
-    //     let program = vec![
-    //         Instruction::new(Opcode::ADD(Operand::IntegerValue(100))),
-    //         Instruction::new(Opcode::DIV(Operand::IntegerValue(5))),
-    //     ];
-    //     let mut vm = VirtualMachine::new(program);
-    //     vm.execute();
-    //     vm.execute();
-    //     assert_eq!(vm.acc, 20);
+        //                      # Divide 20 by 5 without div operator
+        // mov 20 r0            # Set (r0) initial value to 20
+        // mov 5 r1             # Set (r1) devisor to 5
+        // mov 0 r2             # Set (r2) counter to 0
+        // loop:                # Label for looping
+        //      mov r0 acc      # Mov to acc
+        //      sub r1          # Subtract devisor 
+        //      mov acc r0      # Copy result
+        //      mov r2  acc     # Copy counter value to accumulator
+        //      add 1           # Increment accumulator by 1
+        //      mov r2          # Copy increased value back to counter
+        //      cmp r0 0        # Compare current value to 0
+        //      JG loop         # Jump if current value is grater that 0
+        // hlt
 
-    //     panic!();
+        // Expected result acc = 0, r2 = 4
+
+        let program = vec![
+            Instruction::new(Opcode::MOV(
+                Operand::IntegerValue(20),
+                Operand::GeneralRegister(0),
+            )),
+            Instruction::new(Opcode::MOV(
+                Operand::IntegerValue(5),
+                Operand::GeneralRegister(1),
+            )),
+            Instruction::new(Opcode::MOV(
+                Operand::IntegerValue(0),
+                Operand::GeneralRegister(2),
+            )),
+
+            Instruction::new_label("loop".to_string()),
+
+            Instruction::new(Opcode::MOV(Operand::GeneralRegister(0), Operand::ACC)),
+            Instruction::new(Opcode::SUB(Operand::GeneralRegister(1))),
+            Instruction::new(Opcode::MOV(Operand::ACC, Operand::GeneralRegister(0))),
+
+            Instruction::new(Opcode::MOV(Operand::GeneralRegister(2), Operand::ACC)),
+            Instruction::new(Opcode::ADD(Operand::IntegerValue(1))),
+            Instruction::new(Opcode::MOV(Operand::ACC, Operand::GeneralRegister(2))),
+
+            Instruction::new(Opcode::CMP(Operand::GeneralRegister(0), Operand::IntegerValue(0))),
+            Instruction::new(Opcode::JG("loop".to_string())),
+
+            Instruction::new(Opcode::HLT),
+        ];
+        let mut vm = VirtualMachine::new(program);
+        vm.run();
+        // println!("______________________________");
+        
+        // println!("{:?}", vm);
+        // println!("______________________________");
+
+        // println!("{:?}", vm.r[2]);
+
+        assert_eq!(vm.r[2], 4);
+
+    }
 }
 
 // Maszyna wirtualna posiada konfigurowalna liczbę rejestrów ogólnego użytku o domyślnych nazwach r0, r1, r2..,  oraz rejestrów pełniących rolę portów do komunikacji z zewnętrznymi peryferiami o domyślnych nazwach p0, p1, p2… .Poza tym będzie posiadać następujące rejestry specjalne:
