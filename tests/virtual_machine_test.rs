@@ -1,7 +1,100 @@
+use simple_virtual_assembler::{
+    assembler::{Assembler, ParsingError},
+    virtual_machine::VirtualMachine,
+};
+
 extern crate simple_virtual_assembler;
 
+/// Parses and runs program on vm
+fn assembler_and_run(program_text: &str) -> Result<VirtualMachine, ParsingError> {
+    let program = Assembler::new().parse(program_text)?;
+
+    let mut vm = simple_virtual_assembler::virtual_machine::VirtualMachine::new(program);
+    vm.run();
+
+    Ok(vm)
+}
+
 #[test]
-fn create_vm() {
-    // let vm = simple_virtual_assembler::virtual_machine::VirtualMachine::new();
-    // assert_eq!(vm.r[0], 0);
+fn assembling_and_running_simple_program1() {
+    let program_text = r#"
+    MOV 10 acc
+    loop:
+        ADD 8
+        CMP acc 200
+        JL LOOP
+    HLT
+    "#;
+
+    let mut assembler = Assembler::new();
+
+    let result = assembler.parse(program_text);
+
+    assert!(result.is_ok());
+
+    let program = result.unwrap();
+    let mut vm = simple_virtual_assembler::virtual_machine::VirtualMachine::new(program);
+    vm.run();
+
+    println!("{}", vm);
+
+    assert_eq!(vm.get_acc(), 202);
+}
+
+#[test]
+fn assembling_and_running_invalid_code_by_subtracting() {
+    // Error on first line MOV requires 2 operands
+    let program = r#"
+    MOV 10
+    loop:
+        ADD 8
+        CMP acc 200
+        JL LOOP
+    HLT
+    "#;
+    let result = assembler_and_run(program);
+
+    assert!(result.is_err());
+}
+
+#[test]
+fn assembling_and_running_division_by_subtracting() {
+    //                      # Divide 20 by 5 without div operator
+    // mov 20 r0            # Set (r0) initial value to 20
+    // mov 5 r1             # Set (r1) devisor to 5
+    // mov 0 r2             # Set (r2) counter to 0
+    // loop:                # Label for looping
+    //      mov r0 acc      # Mov to acc
+    //      sub r1          # Subtract devisor
+    //      mov acc r0      # Copy result
+    //      mov r2  acc     # Copy counter value to accumulator
+    //      add 1           # Increment accumulator by 1
+    //      mov acc r2      # Copy increased value back to counter
+    //      cmp r0 0        # Compare current value to 0
+    //      JG LOOP         # Jump if current value is grater that 0
+    // hlt
+
+    // Expected result r2 = 4
+
+    let program = r#"
+        MOV 20 r0
+        MOV 5 r1
+        MOV 0 r2
+        loop:
+            MOV r0 acc
+            SUB r1
+            MOV acc r0
+            MOV r2 acc
+            ADD 1
+            MOV acc r2
+            CMP r0 0
+            JG LOOP
+        HLT
+        "#;
+    let result = assembler_and_run(program);
+
+    match result {
+        Ok(vm) => println!("{}", vm),
+        Err(e) => println!("{:?}", e),
+    }
 }

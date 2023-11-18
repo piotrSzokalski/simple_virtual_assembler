@@ -73,7 +73,11 @@ impl Assembler {
                 return Err(ParsingError::new("Invalid port number", line));
             }
 
-            decimal if decimal.chars().all(|c| c.is_numeric() || (c == '-' && decimal.starts_with('-'))) => {
+            decimal
+                if decimal
+                    .chars()
+                    .all(|c| c.is_numeric() || (c == '-' && decimal.starts_with('-'))) =>
+            {
                 if register_only {
                     return Err(ParsingError::new(
                         "Can't parse numeric, this operand must be a register",
@@ -101,7 +105,7 @@ impl Assembler {
                 return Err(ParsingError::new("Can't binary literal operand", line));
             }
 
-            hex if hex.starts_with("0x")=> {
+            hex if hex.starts_with("0x") => {
                 if register_only {
                     return Err(ParsingError::new(
                         "Can't parse hexadecimal literal, this operand must be a register",
@@ -120,7 +124,6 @@ impl Assembler {
             )),
         }
     }
-
 
     pub fn parse(&mut self, program_text: &str) -> Result<Vec<Instruction>, ParsingError> {
         let program_text = program_text.trim();
@@ -144,7 +147,7 @@ impl Assembler {
     /// * 'name' &str - name of label
     /// * 'line' usize - line number
     fn parse_label(&mut self, name: &str, line: usize) -> Result<Instruction, ParsingError> {
-        Ok(Instruction::new_label(name.to_string()))
+        Ok(Instruction::new_label(name[0..name.len() - 1].to_string()))
 
         //Err(ParsingError::new("Unknown error", line))
     }
@@ -159,7 +162,12 @@ impl Assembler {
         let operands = &words[1..];
 
         let instruction = match instruction_word.to_ascii_uppercase().as_str() {
-            "MOV" => self.parse_binary_instruction(Opcode::MOV, operands, current_line_number),
+            "MOV" => self.parse_binary_instruction(
+                Opcode::MOV,
+                operands,
+                current_line_number,
+                (false, true),
+            ),
 
             "ADD" => self.parse_unary_instruction(Opcode::ADD, operands, current_line_number),
             "SUB" => self.parse_unary_instruction(Opcode::SUB, operands, current_line_number),
@@ -171,6 +179,13 @@ impl Assembler {
             "OR" => self.parse_unary_instruction(Opcode::OR, operands, current_line_number),
             "XOR" => self.parse_unary_instruction(Opcode::XOR, operands, current_line_number),
             "NOT" => Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
+
+            "CMP" => self.parse_binary_instruction(
+                Opcode::CMP,
+                operands,
+                current_line_number,
+                (false, false),
+            ), //TODO:
 
             "JE" => self.parse_jump(Opcode::JE, operands, current_line_number),
             "JL" => self.parse_jump(Opcode::JL, operands, current_line_number),
@@ -191,6 +206,7 @@ impl Assembler {
         opcode: fn(Operand, Operand) -> Opcode,
         operands: &[&str],
         line: usize,
+        register_only: (bool, bool),
     ) -> Result<Instruction, ParsingError> {
         if operands.len() != 2 {
             return Err(ParsingError::new(
@@ -198,8 +214,9 @@ impl Assembler {
                 line,
             ));
         }
-        let operand1 = self.parse_operand(operands[0], line, false)?;
-        let operand2 = self.parse_operand(operands[1], line, true)?;
+        let (ro1, ro2) = register_only;
+        let operand1 = self.parse_operand(operands[0], line, ro1)?;
+        let operand2 = self.parse_operand(operands[1], line, ro2)?;
         Ok(Instruction::new(opcode(operand1, operand2)))
     }
 
@@ -226,8 +243,11 @@ impl Assembler {
         operands: &[&str],
         line: usize,
     ) -> Result<Instruction, ParsingError> {
-        if operands.len() != 2 {
-            return Err(ParsingError::new("Can jump to empty label", line));
+        if operands.is_empty(){
+            return Err(ParsingError::new("Can't jump to empty label", line));
+        }
+        else if operands.len() > 1 {
+            return Err(ParsingError::new("Jump instruction take only one operand", line));
         }
         let label = operands[0];
         Ok(Instruction::new(opcode(label.to_string())))
@@ -364,7 +384,7 @@ mod test {
             Instruction::new(Opcode::ADD(Operand::IntegerValue(5))),
         ];
 
-        assert_eq!(result.unwrap(), expected); 
+        assert_eq!(result.unwrap(), expected);
     }
 
     #[test]
@@ -378,20 +398,16 @@ mod test {
         let mut assembler = Assembler::new();
         let result = assembler.parse(program_text);
 
-        
         assert!(result.is_err());
-
 
         let program_text = r#"
         ADD -7
         ADD AF
         "#;
-        
 
         let mut assembler = Assembler::new();
         let result = assembler.parse(program_text);
 
-        
         assert!(result.is_err());
     }
 
@@ -442,7 +458,7 @@ mod test {
 
         //println!("{}", err);
     }
-
+    //TODO
     #[test]
     fn test_parsing_mov() {
         let program_text = r#"
@@ -463,11 +479,14 @@ mod test {
     }
 
     #[test]
-    fn test_parsing_labels() {
+    fn test_parsing_labels_and_jumps() {
         let program_text = r#"
+        MOV 10 acc
         loop:
             ADD 8
-            MOV 10 ACC
+            CMP acc 20
+            JL loop
+        HLT
         "#;
 
         let mut assembler = Assembler::new();

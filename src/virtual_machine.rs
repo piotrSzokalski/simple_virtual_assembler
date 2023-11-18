@@ -1,6 +1,6 @@
 //use std::collections::btree_map::Values;
 
-use std::fmt::{Display, Formatter, Result};
+use std::fmt::{self, Display, Formatter, Result};
 
 use std::{collections::HashMap, ops::IndexMut};
 
@@ -47,6 +47,10 @@ impl VirtualMachine {
             labels: HashMap::new(),
         }
     }
+    pub fn get_acc(&self) -> i32 {
+        self.acc
+    }
+
     /// Copies operand into register
     /// ### Arguments
     ///
@@ -136,6 +140,8 @@ impl VirtualMachine {
 
     /// Jumps to label
     pub fn jump_to_label(&mut self, label: &str, condition: JMPCondition) {
+       
+
         if let Some(&jmp_to) = self.labels.get(label) {
             match (self.flag, condition) {
                 (Flag::ZERO, JMPCondition::EQ) => {}
@@ -190,7 +196,6 @@ impl VirtualMachine {
         match instruction {
             Instruction::Opcode(opcode) => match opcode {
                 Opcode::HLT => {
-                    println!("HLT encountered");
                     return false;
                 }
                 Opcode::NOP => {}
@@ -225,6 +230,30 @@ impl VirtualMachine {
         while running {
             running = self.execute();
         }
+    }
+}
+
+impl fmt::Display for VirtualMachine {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "_____________________________VM__________________________________");
+        write!(f, "PC {}\t", self.pc)?;
+        write!(f, "ACC: {}\t", self.acc)?;
+        write!(f, "FLG: {:?}\n", self.flag)?;
+        write!(f, "Registers: {:?}\t", self.r)?;
+        write!(f, "Ports: {:?}\n", self.p)?;
+
+        // Separate the vectors from the rest
+        writeln!(f, "Program Instructions:")?;
+        for instruction in &self.program {
+            writeln!(f, "  {:?}", instruction)?;
+        }
+
+        writeln!(f, "Labels:")?;
+        for (label, value) in &self.labels {
+            writeln!(f, "  {}: {}", label, value)?;
+        }
+        writeln!(f, "_________________________________________________________________");
+        Ok(())
     }
 }
 
@@ -444,7 +473,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vm_labels_jumping() {
+    fn test_vm_labels_jumping_division_by_subtraction() {
         //                      # Divide 20 by 5 without div operator
         // mov 20 r0            # Set (r0) initial value to 20
         // mov 5 r1             # Set (r1) devisor to 5
@@ -455,7 +484,7 @@ mod tests {
         //      mov acc r0      # Copy result
         //      mov r2  acc     # Copy counter value to accumulator
         //      add 1           # Increment accumulator by 1
-        //      mov r2          # Copy increased value back to counter
+        //      mov acc r2      # Copy increased value back to counter
         //      cmp r0 0        # Compare current value to 0
         //      JG loop         # Jump if current value is grater that 0
         // hlt
