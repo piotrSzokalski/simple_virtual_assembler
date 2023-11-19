@@ -1,11 +1,10 @@
 use crate::opcodes::Opcode;
 
 /// Instruction used by SVM,  wrapper for Opcode
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub enum Instruction {
-     Opcode(Opcode),
-     Label(String)
-     
+    Opcode(Opcode),
+    Label(String),
 }
 
 impl Instruction {

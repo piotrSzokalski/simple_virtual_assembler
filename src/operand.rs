@@ -1,5 +1,6 @@
 /// Operand, integer or register
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, serde::Deserialize, serde::Serialize)]
+
 pub enum Operand {
     /// Integer value
     IntegerValue(i32),
@@ -10,7 +11,7 @@ pub enum Operand {
     /// Accumulator register
     ACC,
     /// Program counter register
-    PC
+    PC,
 }
 
 impl Operand {
@@ -24,4 +25,3 @@ impl Operand {
     //     Operand::REGISTER(reg_num)
     // }
 }
-

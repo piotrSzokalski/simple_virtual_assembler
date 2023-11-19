@@ -1,14 +1,14 @@
-use std::fmt::{Display, Formatter, Result, self};
+use std::fmt::{self, Display, Formatter, Result};
 
 /// Possible states of Flag register
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, serde::Deserialize, serde::Serialize)]
+
 pub enum Flag {
     ZERO,
     EQUAL,
     GREATER,
     LESSER,
 }
-
 
 impl fmt::Display for Flag {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

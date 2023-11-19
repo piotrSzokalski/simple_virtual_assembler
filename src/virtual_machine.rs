@@ -10,7 +10,7 @@ use crate::{
     opcodes::{JMPCondition, Opcode},
     operand::Operand,
 };
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct VirtualMachine {
     /// Program counter register
     pc: usize,
@@ -140,8 +140,6 @@ impl VirtualMachine {
 
     /// Jumps to label
     pub fn jump_to_label(&mut self, label: &str, condition: JMPCondition) {
-       
-
         if let Some(&jmp_to) = self.labels.get(label) {
             match (self.flag, condition) {
                 (Flag::ZERO, JMPCondition::EQ) => {}
@@ -235,7 +233,10 @@ impl VirtualMachine {
 
 impl fmt::Display for VirtualMachine {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "_____________________________VM__________________________________");
+        writeln!(
+            f,
+            "_____________________________VM__________________________________"
+        );
         write!(f, "PC {}\t", self.pc)?;
         write!(f, "ACC: {}\t", self.acc)?;
         write!(f, "FLG: {:?}\n", self.flag)?;
@@ -252,7 +253,10 @@ impl fmt::Display for VirtualMachine {
         for (label, value) in &self.labels {
             writeln!(f, "  {}: {}", label, value)?;
         }
-        writeln!(f, "_________________________________________________________________");
+        writeln!(
+            f,
+            "_________________________________________________________________"
+        );
         Ok(())
     }
 }
