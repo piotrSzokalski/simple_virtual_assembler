@@ -4,7 +4,8 @@ use std::ops::IndexMut;
 
 use crate::{instruction::Instruction, opcodes::Opcode, operand::Operand};
 
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+
 pub struct ParsingError {
     line: usize,
     message: String,
@@ -27,9 +28,9 @@ impl fmt::Display for ParsingError {
 
 impl error::Error for ParsingError {}
 
+
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct Assembler {
-    //translation: HashMap<&'static str, Opcode>,
-    //instructions: Vec<String>,
 }
 impl Assembler {
     pub fn new() -> Assembler {
@@ -243,11 +244,13 @@ impl Assembler {
         operands: &[&str],
         line: usize,
     ) -> Result<Instruction, ParsingError> {
-        if operands.is_empty(){
+        if operands.is_empty() {
             return Err(ParsingError::new("Can't jump to empty label", line));
-        }
-        else if operands.len() > 1 {
-            return Err(ParsingError::new("Jump instruction take only one operand", line));
+        } else if operands.len() > 1 {
+            return Err(ParsingError::new(
+                "Jump instruction take only one operand",
+                line,
+            ));
         }
         let label = operands[0];
         Ok(Instruction::new(opcode(label.to_string())))
