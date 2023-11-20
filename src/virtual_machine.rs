@@ -47,6 +47,11 @@ impl VirtualMachine {
             labels: HashMap::new(),
         }
     }
+
+    pub fn load_program(&mut self, program: Vec<Instruction>) {
+        self.program = program;
+    }
+
     pub fn get_acc(&self) -> i32 {
         self.acc
     }
@@ -290,6 +295,18 @@ mod tests {
             i2.get_opcode().unwrap(),
             Opcode::SUB(Operand::IntegerValue(10))
         );
+    }
+
+    #[test]
+    fn test_load_program() {
+        let mut vm = VirtualMachine::new(vec![]);
+        let program = vec![
+            Instruction::new(Opcode::ADD(Operand::IntegerValue(10))),
+            Instruction::new(Opcode::ADD(Operand::IntegerValue(45))),
+        ];
+        vm.load_program(program.clone());
+        assert_eq!(vm.program, program);
+        
     }
 
     #[test]
