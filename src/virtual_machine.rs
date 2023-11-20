@@ -22,13 +22,26 @@ pub struct VirtualMachine {
     pub r: [i32; 4],
     /// Ports - registers used for I/O
     p: [i32; 4],
-    /// Vector of instructions to be executed
-    program: Vec<Instruction>,
     /// Labels used for jumps
     labels: HashMap<String, usize>,
+    /// Vector of instructions to be executed
+    program: Vec<Instruction>,
 }
 
 impl VirtualMachine {
+    /// Create an instance of VM
+    ///
+    pub fn new() -> VirtualMachine {
+        VirtualMachine {
+            pc: 0,
+            acc: 0,
+            flag: Flag::EQUAL,
+            r: [0; 4],
+            p: [0; 4],
+            labels: HashMap::new(),
+            program: Vec::new(),
+        }
+    }
     /// Create an instance of VM
     ///
     /// ### Arguments
@@ -36,11 +49,11 @@ impl VirtualMachine {
     /// * 'program' - List of instruction to be executed
     ///
     /// ### Returns
-    pub fn new(program: Vec<Instruction>) -> VirtualMachine {
+    pub fn new_with_program(program: Vec<Instruction>) -> VirtualMachine {
         VirtualMachine {
             pc: 0,
             acc: 0,
-            flag: Flag::ZERO,
+            flag: Flag::EQUAL,
             r: [0; 4],
             p: [0; 4],
             program,
@@ -54,6 +67,40 @@ impl VirtualMachine {
 
     pub fn get_acc(&self) -> i32 {
         self.acc
+    }
+
+    pub fn get_pc(&self) -> usize {
+        self.pc
+    }
+
+    pub fn get_flag(&self) -> Flag {
+        self.flag
+    }
+
+    pub fn get_registers(&self) -> [i32; 4] {
+        self.r
+    }
+
+    pub fn get_ports(&self) -> [i32; 4] {
+        self.p
+    }
+
+    /// Gets state of all register (acc, pc, flag, r, p)
+    pub fn get_state(&self) -> (i32, usize, Flag, [i32; 4], [i32; 4]) {
+        (self.acc, self.pc, self.flag, self.r, self.p)
+    }
+
+    pub fn get_labels(&self) -> HashMap<String, usize> {
+        self.labels.clone()
+    }
+
+    pub fn get_program(&self) -> Vec<Instruction> {
+        self.program.clone()
+    }
+
+    /// Gets state of virtual machine (acc, pc, flag, r, p, labels, program)
+    pub fn get_state_full(&self) -> (i32, usize, Flag, [i32; 4], [i32; 4], HashMap<String, usize>,  Vec<Instruction>) {
+        (self.acc, self.pc, self.flag, self.r, self.p, self.labels.clone(), self.program.clone())
     }
 
     /// Copies operand into register
@@ -137,17 +184,16 @@ impl VirtualMachine {
     }
 
     /// Adds label unless it is already declared
-    pub fn add_label(&mut self, name: String) {
+    fn add_label(&mut self, name: String) {
         if !self.labels.contains_key(&name) {
             self.labels.insert(name, self.pc);
         }
     }
 
     /// Jumps to label
-    pub fn jump_to_label(&mut self, label: &str, condition: JMPCondition) {
+    fn jump_to_label(&mut self, label: &str, condition: JMPCondition) {
         if let Some(&jmp_to) = self.labels.get(label) {
             match (self.flag, condition) {
-                (Flag::ZERO, JMPCondition::EQ) => {}
                 (Flag::EQUAL, JMPCondition::EQ) => self.pc = jmp_to,
                 (Flag::GREATER, JMPCondition::GRT) => self.pc = jmp_to,
                 (Flag::LESSER, JMPCondition::LST) => self.pc = jmp_to,
@@ -157,7 +203,7 @@ impl VirtualMachine {
     }
 
     /// Compares operands
-    pub fn compare(&mut self, operand1: Operand, operand2: Operand) {
+    fn compare(&mut self, operand1: Operand, operand2: Operand) {
         let value1 = match operand1 {
             Operand::IntegerValue(value) => value,
             Operand::GeneralRegister(index) => self.r[index],
@@ -184,7 +230,7 @@ impl VirtualMachine {
     }
 
     /// Fetches next instruction from the program and increments program counter by one
-    pub fn fetch(&mut self) -> Instruction {
+    fn fetch(&mut self) -> Instruction {
         let opcode = self.program[self.pc].clone();
         self.pc += 1;
         opcode
@@ -278,7 +324,7 @@ mod tests {
     #[test]
     fn test_create_vm() {
         let program = vec![Instruction::new(Opcode::ADD(Operand::IntegerValue(12)))];
-        let vm = VirtualMachine::new(program);
+        let vm = VirtualMachine::new_with_program(program);
         assert_eq!(vm.r[0], 0);
     }
 
@@ -288,7 +334,7 @@ mod tests {
             Instruction::new(Opcode::ADD(Operand::IntegerValue(12))),
             Instruction::new(Opcode::SUB(Operand::IntegerValue(10))),
         ];
-        let mut vm = VirtualMachine::new(program);
+        let mut vm = VirtualMachine::new_with_program(program);
         let _i1 = vm.fetch();
         let i2 = vm.fetch();
         assert_eq!(
@@ -299,14 +345,13 @@ mod tests {
 
     #[test]
     fn test_load_program() {
-        let mut vm = VirtualMachine::new(vec![]);
+        let mut vm = VirtualMachine::new_with_program(vec![]);
         let program = vec![
             Instruction::new(Opcode::ADD(Operand::IntegerValue(10))),
             Instruction::new(Opcode::ADD(Operand::IntegerValue(45))),
         ];
         vm.load_program(program.clone());
         assert_eq!(vm.program, program);
-        
     }
 
     #[test]
@@ -315,7 +360,7 @@ mod tests {
             Instruction::new(Opcode::ADD(Operand::IntegerValue(10))),
             Instruction::new(Opcode::ADD(Operand::IntegerValue(45))),
         ];
-        let mut vm = VirtualMachine::new(program);
+        let mut vm = VirtualMachine::new_with_program(program);
         vm.execute();
         vm.execute();
         assert_eq!(vm.acc, 55);
@@ -330,7 +375,7 @@ mod tests {
             Instruction::new(Opcode::SUB(Operand::IntegerValue(1))),
             Instruction::new(Opcode::HLT),
         ];
-        let mut vm = VirtualMachine::new(program);
+        let mut vm = VirtualMachine::new_with_program(program);
         vm.run();
 
         assert_eq!(vm.acc, 8);
@@ -342,7 +387,7 @@ mod tests {
             Instruction::new(Opcode::ADD(Operand::IntegerValue(3))),
             Instruction::new(Opcode::MUL(Operand::IntegerValue(7))),
         ];
-        let mut vm = VirtualMachine::new(program);
+        let mut vm = VirtualMachine::new_with_program(program);
         vm.execute();
         vm.execute();
         assert_eq!(vm.acc, 21);
@@ -354,7 +399,7 @@ mod tests {
             Instruction::new(Opcode::ADD(Operand::IntegerValue(100))),
             Instruction::new(Opcode::DIV(Operand::IntegerValue(5))),
         ];
-        let mut vm = VirtualMachine::new(program);
+        let mut vm = VirtualMachine::new_with_program(program);
         vm.execute();
         vm.execute();
         assert_eq!(vm.acc, 20);
@@ -391,7 +436,7 @@ mod tests {
             Instruction::new(Opcode::HLT),
         ];
         // expected:  r1 = 7, r2 =  12, p1 = 12, p2 = 7
-        let mut vm = VirtualMachine::new(program);
+        let mut vm = VirtualMachine::new_with_program(program);
         vm.run();
         assert_eq!(vm.r[1], 7);
         assert_eq!(vm.r[2], 12);
@@ -444,7 +489,7 @@ mod tests {
             )),
             Instruction::new(Opcode::HLT),
         ];
-        let mut vm = VirtualMachine::new(program);
+        let mut vm = VirtualMachine::new_with_program(program);
         vm.execute();
         vm.execute();
         vm.execute();
@@ -487,7 +532,7 @@ mod tests {
             Instruction::new(Opcode::HLT),
         ];
 
-        let mut vm = VirtualMachine::new(program);
+        let mut vm = VirtualMachine::new_with_program(program);
         vm.run();
 
         assert_eq!(vm.acc, 17);
@@ -539,7 +584,7 @@ mod tests {
             Instruction::new(Opcode::JG("loop".to_string())),
             Instruction::new(Opcode::HLT),
         ];
-        let mut vm = VirtualMachine::new(program);
+        let mut vm = VirtualMachine::new_with_program(program);
         vm.run();
         // println!("______________________________");
 

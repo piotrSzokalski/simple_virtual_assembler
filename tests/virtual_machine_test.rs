@@ -9,7 +9,7 @@ extern crate simple_virtual_assembler;
 fn assembler_and_run(program_text: &str) -> Result<VirtualMachine, ParsingError> {
     let program = Assembler::new().parse(program_text)?;
 
-    let mut vm = simple_virtual_assembler::virtual_machine::VirtualMachine::new(program);
+    let mut vm = simple_virtual_assembler::virtual_machine::VirtualMachine::new_with_program(program);
     vm.run();
 
     Ok(vm)
@@ -33,7 +33,7 @@ fn assembling_and_running_simple_program1() {
     assert!(result.is_ok());
 
     let program = result.unwrap();
-    let mut vm = simple_virtual_assembler::virtual_machine::VirtualMachine::new(program);
+    let mut vm = simple_virtual_assembler::virtual_machine::VirtualMachine::new_with_program(program);
     vm.run();
 
     println!("{}", vm);
