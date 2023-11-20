@@ -2,31 +2,10 @@ use std::error;
 use std::fmt;
 use std::ops::IndexMut;
 
-use crate::{instruction::Instruction, opcodes::Opcode, operand::Operand};
+use crate::vm::{instruction::Instruction, opcodes::Opcode, operand::Operand};
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+use super::parsing_err::ParsingError;
 
-pub struct ParsingError {
-    line: usize,
-    message: String,
-}
-
-impl ParsingError {
-    pub fn new(message: &str, line: usize) -> ParsingError {
-        ParsingError {
-            line: line,
-            message: message.to_string(),
-        }
-    }
-}
-
-impl fmt::Display for ParsingError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Parsing error at line {}: {}", self.line, self.message)
-    }
-}
-
-impl error::Error for ParsingError {}
 
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -335,7 +314,7 @@ mod test {
         println!("{}", err);
         println!("____________________________________");
 
-        assert_eq!(err.message, "Empty Program")
+        assert_eq!(err.get_message(), "Empty Program")
     }
 
     #[test]

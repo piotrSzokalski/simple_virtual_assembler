@@ -1,4 +1,4 @@
-use crate::opcodes::Opcode;
+use crate::vm::opcodes::Opcode;
 
 /// Instruction used by SVM,  wrapper for Opcode
 #[derive(PartialEq, Eq, Clone, Debug, serde::Deserialize, serde::Serialize)]

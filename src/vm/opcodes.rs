@@ -1,4 +1,4 @@
-use crate::operand::Operand;
+use crate::vm::operand::Operand;
 
 #[derive(Debug, PartialEq, Eq, Clone, serde::Deserialize, serde::Serialize)]
 

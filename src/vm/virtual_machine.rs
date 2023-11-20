@@ -4,7 +4,7 @@ use std::fmt::{self, Display, Formatter, Result};
 
 use std::{collections::HashMap, ops::IndexMut};
 
-use crate::{
+use crate::vm::{
     flag::Flag,
     instruction::Instruction,
     opcodes::{JMPCondition, Opcode},
@@ -317,7 +317,7 @@ mod tests {
 
     use std::vec;
 
-    use crate::operand::Operand;
+    use crate::vm::operand::Operand;
 
     use super::*;
 
