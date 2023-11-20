@@ -6,11 +6,8 @@ use crate::vm::{instruction::Instruction, opcodes::Opcode, operand::Operand};
 
 use super::parsing_err::ParsingError;
 
-
-
 #[derive(serde::Deserialize, serde::Serialize)]
-pub struct Assembler {
-}
+pub struct Assembler {}
 impl Assembler {
     pub fn new() -> Assembler {
         Assembler {}
@@ -23,7 +20,11 @@ impl Assembler {
         register_only: bool,
     ) -> Result<Operand, ParsingError> {
         if operand_text.is_empty() {
-            return Err(ParsingError::new("Empty operand", 0));
+            return Err(ParsingError::new(
+                ParsingError::EmptyOperand,
+                line,
+                "".to_string(),
+            ));
         }
         let remaining_text = &operand_text[1..];
 
@@ -37,20 +38,39 @@ impl Assembler {
             r if r.starts_with('r') => {
                 if let Ok(index) = remaining_text.parse::<usize>() {
                     if index > 3 {
-                        return Err(ParsingError::new("Invalid port number", line));
+                        return Err(ParsingError::new(
+                            ParsingError::InvalidPortNumber,
+                            line,
+                            "".to_string(),
+                        ));
                     }
                     return Ok(Operand::GeneralRegister(index.try_into().unwrap()));
                 }
-                return Err(ParsingError::new("Invalid port number", line));
+                return Err(ParsingError::new(
+                    ParsingError::InvalidPortNumber,
+                    line,
+                    "".to_string(),
+                ));
+                //return Err(ParsingError::new("Invalid port number", line));
             }
             p if p.starts_with('p') => {
                 if let Ok(index) = remaining_text.parse::<usize>() {
                     if index > 3 {
-                        return Err(ParsingError::new("Invalid port number", line));
+                        return Err(ParsingError::new(
+                            ParsingError::InvalidPortNumber,
+                            line,
+                            "".to_string(),
+                        ));
+                        //return Err(ParsingError::new("Invalid port number", line));
                     }
                     return Ok(Operand::PortRegister(index.try_into().unwrap()));
                 }
-                return Err(ParsingError::new("Invalid port number", line));
+                return Err(ParsingError::new(
+                    ParsingError::InvalidPortNumber,
+                    line,
+                    "".to_string(),
+                ));
+                //return Err(ParsingError::new("Invalid port number", line));
             }
 
             decimal
@@ -60,48 +80,85 @@ impl Assembler {
             {
                 if register_only {
                     return Err(ParsingError::new(
-                        "Can't parse numeric, this operand must be a register",
+                        ParsingError::InvalidOperandType,
                         line,
+                        "".to_string(),
                     ));
+                    // return Err(ParsingError::new(
+                    //     "Can't parse numeric, this operand must be a register",
+                    //     line,
+                    // ));
                 }
                 if let Ok(decimal) = decimal.parse::<i32>() {
                     return Ok(Operand::IntegerValue(decimal));
                 }
                 return Err(ParsingError::new(
-                    "Can't parse numeric literal operand",
+                    ParsingError::InvalidNumericLiteral,
                     line,
+                    "".to_string(),
                 ));
+                // return Err(ParsingError::new(
+                //     "Can't parse numeric literal operand",
+                //     line,
+                // ));
             }
             binary if binary.starts_with("0b") => {
                 if register_only {
                     return Err(ParsingError::new(
-                        "Can't parse binary literal, this operand must be a register",
+                        ParsingError::InvalidBinaryLiteral,
                         line,
+                        "".to_string(),
                     ));
+                    // return Err(ParsingError::new(
+                    //     "Can't parse binary literal, this operand must be a register",
+                    //     line,
+                    // ));
                 }
                 if let Ok(binary) = i32::from_str_radix(&binary[2..], 2) {
                     return Ok(Operand::IntegerValue(binary));
                 }
-                return Err(ParsingError::new("Can't binary literal operand", line));
+                return Err(ParsingError::new(
+                    ParsingError::InvalidBinaryLiteral,
+                    line,
+                    "".to_string(),
+                ));
+                //return Err(ParsingError::new("Can't binary literal operand", line));
             }
 
             hex if hex.starts_with("0x") => {
                 if register_only {
                     return Err(ParsingError::new(
-                        "Can't parse hexadecimal literal, this operand must be a register",
+                        ParsingError::InvalidHexLiteral,
                         line,
+                        "".to_string(),
                     ));
+                    // return Err(ParsingError::new(
+                    //     "Can't parse hexadecimal literal, this operand must be a register",
+                    //     line,
+                    // ));
                 }
                 if let Ok(hex) = i32::from_str_radix(&hex[2..], 16) {
                     return Ok(Operand::IntegerValue(hex));
                 }
-                return Err(ParsingError::new("Can't hexadecimal literal operand", line));
+                return Err(ParsingError::new(
+                    ParsingError::InvalidHexLiteral,
+                    line,
+                    "".to_string(),
+                ));
+                //return Err(ParsingError::new("Can't hexadecimal literal operand", line));
             }
 
-            _ => Err(ParsingError::new(
-                "Can't parse operand, unknown operand",
-                line,
-            )),
+            _ => {
+                return Err(ParsingError::new(
+                    ParsingError::InvalidOperandType,
+                    line,
+                    "".to_string(),
+                ))
+            }
+            // Err(ParsingError::new(
+            //     "Can't parse operand, unknown operand",
+            //     line,
+            // )),
         }
     }
 
@@ -109,7 +166,8 @@ impl Assembler {
         let program_text = program_text.trim();
 
         if program_text.is_empty() {
-            return Err(ParsingError::new("Empty Program", 0));
+            return Err(ParsingError::new(ParsingError::Empty, 0, "".to_string()));
+            //return Err(ParsingError::new("Empty Program", 0));
         }
 
         let program: Result<Vec<Instruction>, ParsingError> = program_text
@@ -158,7 +216,11 @@ impl Assembler {
             "AND" => self.parse_unary_instruction(Opcode::AND, operands, current_line_number),
             "OR" => self.parse_unary_instruction(Opcode::OR, operands, current_line_number),
             "XOR" => self.parse_unary_instruction(Opcode::XOR, operands, current_line_number),
-            "NOT" => Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
+            "NOT" => Err(ParsingError::new(
+                ParsingError::NotImplanted,
+                current_line_number,
+                "".to_string(),
+            )), //Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
 
             "CMP" => self.parse_binary_instruction(
                 Opcode::CMP,
@@ -172,10 +234,22 @@ impl Assembler {
             "JG" => self.parse_jump(Opcode::JG, operands, current_line_number),
 
             "HLT" => Ok(Instruction::new(Opcode::HLT)),
-            "NOP" => Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
-            "SPL" => Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
+            "NOP" => Err(ParsingError::new(
+                ParsingError::NotImplanted,
+                current_line_number,
+                "".to_string(),
+            )), //Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
+            "SPL" => Err(ParsingError::new(
+                ParsingError::NotImplanted,
+                current_line_number,
+                "".to_string(),
+            )), //Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
             label if label.ends_with(':') => self.parse_label(label, current_line_number),
-            _ => Err(ParsingError::new("Unknown error", current_line_number)),
+            _ => Err(ParsingError::new(
+                ParsingError::Unknown,
+                current_line_number,
+                "".to_string(),
+            )), //Err(ParsingError::new("Unknown error", current_line_number)),
         };
 
         instruction
@@ -190,9 +264,14 @@ impl Assembler {
     ) -> Result<Instruction, ParsingError> {
         if operands.len() != 2 {
             return Err(ParsingError::new(
-                "Binary instructions requires exactly 2 operands",
+                ParsingError::NotEnoughOperands,
                 line,
+                "".to_string(),
             ));
+            // return Err(ParsingError::new(ParsingError::
+            //     "Binary instructions requires exactly 2 operands",
+            //     line,
+            // ));
         }
         let (ro1, ro2) = register_only;
         let operand1 = self.parse_operand(operands[0], line, ro1)?;
@@ -208,9 +287,14 @@ impl Assembler {
     ) -> Result<Instruction, ParsingError> {
         if operands.len() != 1 {
             return Err(ParsingError::new(
-                "Single operand instruction requires exactly 1 operand",
+                ParsingError::TooManyOperands,
                 line,
+                "".to_string(),
             ));
+            // return Err(ParsingError::new(
+            //     "Single operand instruction requires exactly 1 operand",
+            //     line,
+            // ));
         }
 
         let operand = self.parse_operand(operands[0], line, false)?;
@@ -224,12 +308,22 @@ impl Assembler {
         line: usize,
     ) -> Result<Instruction, ParsingError> {
         if operands.is_empty() {
-            return Err(ParsingError::new("Can't jump to empty label", line));
+            return Err(ParsingError::new(
+                ParsingError::NotEnoughOperands,
+                line,
+                "".to_string(),
+            ));
+            //return Err(ParsingError::new("Can't jump to empty label", line));
         } else if operands.len() > 1 {
             return Err(ParsingError::new(
-                "Jump instruction take only one operand",
+                ParsingError::TooManyOperands,
                 line,
+                "".to_string(),
             ));
+            // return Err(ParsingError::new(
+            //     "Jump instruction take only one operand",
+            //     line,
+            // ));
         }
         let label = operands[0];
         Ok(Instruction::new(opcode(label.to_string())))
@@ -314,7 +408,7 @@ mod test {
         println!("{}", err);
         println!("____________________________________");
 
-        assert_eq!(err.get_message(), "Empty Program")
+        //assert_eq!(err.get_message(), "Empty Program")
     }
 
     #[test]

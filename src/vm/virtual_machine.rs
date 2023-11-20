@@ -99,8 +99,26 @@ impl VirtualMachine {
     }
 
     /// Gets state of virtual machine (acc, pc, flag, r, p, labels, program)
-    pub fn get_state_full(&self) -> (i32, usize, Flag, [i32; 4], [i32; 4], HashMap<String, usize>,  Vec<Instruction>) {
-        (self.acc, self.pc, self.flag, self.r, self.p, self.labels.clone(), self.program.clone())
+    pub fn get_state_full(
+        &self,
+    ) -> (
+        i32,
+        usize,
+        Flag,
+        [i32; 4],
+        [i32; 4],
+        HashMap<String, usize>,
+        Vec<Instruction>,
+    ) {
+        (
+            self.acc,
+            self.pc,
+            self.flag,
+            self.r,
+            self.p,
+            self.labels.clone(),
+            self.program.clone(),
+        )
     }
 
     /// Copies operand into register
