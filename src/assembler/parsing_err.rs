@@ -3,6 +3,8 @@ use std::fmt;
 use std::ops::IndexMut;
 use std::string::ParseError;
 
+use rust_i18n::t;
+
 use crate::vm::{instruction::Instruction, opcodes::Opcode, operand::Operand};
 
 #[derive(Debug, serde::Deserialize, serde::Serialize, Clone)]
@@ -68,7 +70,8 @@ impl fmt::Display for ParsingError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Parsing error at line {}: {}",
+            "{} {}: {}",
+            t!("error.parsing"),
             self.get_data().line,
             self.get_data().message
         )
@@ -87,5 +90,21 @@ mod tests {
             ParsingError::new(ParsingError::TooManyOperands, 123, "message".to_owned());
 
         println!("{}", parsing_error);
+    }
+
+    #[test]
+    fn test_parsing_error_localization() {
+        let parsing_error =
+            ParsingError::new(ParsingError::TooManyOperands, 123, "".to_owned());
+
+        rust_i18n::set_locale("pl");
+
+        println!("{}", parsing_error);
+
+        rust_i18n::set_locale("en");
+        println!("_____________________________________________--");
+        println!("{}", parsing_error);
+
+       
     }
 }
