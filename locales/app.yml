@@ -1,10 +1,40 @@
 _version: 2
-hello:
-  en: Hello world
-  pl: Cześć
-messages.hello:
-  en: qqqqqqq
-  pl: zzzzzzzz
 error.parsing:
   en: Parsing error at line
   pl: Błąd parsowania na lini
+error.empty_operand:
+  en: Empty operand
+  pl: Pusta operanda
+error.invalid_port_number:
+  en: Invalid port number
+  pl: Nieprawidłowy numer portu
+error.invalid_register_number:
+  en: Invalid register number
+  pl: Nieprawidłowy numer rejestru
+error.invalid_operand_type:
+  en: Invalid operand type
+  pl: Nieprawidłowy typ operanda
+error.invalid_numeric_literal:
+  en: Invalid numeric literal
+  pl: Nieprawidłowa liczba literalna
+error.invalid_binary_literal:
+  en: Invalid binary literal
+  pl: Nieprawidłowy literal binarny
+error.invalid_hex_literal:
+  en: Invalid hex literal
+  pl: Nieprawidłowy literal heksadecymalny
+error.empty:
+  en: Empty
+  pl: Pusty
+error.unknown:
+  en: Unknown
+  pl: Nieznany
+error.not_implanted:
+  en: Not implemented
+  pl: Niezaimplementowane
+error.not_enough_operands:
+  en: Not enough operands
+  pl: Zbyt mało operandów
+error.too_many_operands:
+  en: Too many operands
+  pl: Zbyt wiele operandów

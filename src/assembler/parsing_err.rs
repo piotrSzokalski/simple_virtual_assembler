@@ -66,15 +66,40 @@ impl ParsingError {
     }
 }
 
+// impl fmt::Display for ParsingError {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(
+//             f,
+//             "{} {}: {}",
+//             t!("error.parsing"),
+//             self.get_data().line,
+//             self.get_data().message
+//         )
+//     }
+// }
+
 impl fmt::Display for ParsingError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{} {}: {}",
-            t!("error.parsing"),
-            self.get_data().line,
-            self.get_data().message
-        )
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+
+        let error_type = match self {
+            ParsingError::EmptyOperand(_) => t!("error.empty_operand"),
+            ParsingError::InvalidPortNumber(_) => t!("error.invalid_port_number"),
+            ParsingError::InvalidRegisterNumber(_) => t!("error.invalid_register_number"),
+            ParsingError::InvalidOperandType(_) => t!("error.invalid_operand_type"),
+            ParsingError::InvalidNumericLiteral(_) => t!("error.invalid_numeric_literal"),
+            ParsingError::InvalidBinaryLiteral(_) => t!("error.invalid_binary_literal"),
+            ParsingError::InvalidHexLiteral(_) => t!("error.invalid_hex_literal"),
+            ParsingError::Empty(_) => t!("error.empty"),
+            ParsingError::Unknown(_) => t!("error.unknown"),
+            ParsingError::NotImplanted(_) => t!("error.not_implanted"),
+            ParsingError::NotEnoughOperands(_) => t!("error.not_enough_operands"),
+            ParsingError::TooManyOperands(_) => t!("error.too_many_operands"),
+        };
+
+        let error_data = self.get_data();
+
+        // { parsing error } : { line } \t { error type } \t { details/message }
+        write!(f, "{}:{}\t{}\t{}",  t!("error.parsing"), error_data.line, error_type,  error_data.message)
     }
 }
 
@@ -95,16 +120,18 @@ mod tests {
     #[test]
     fn test_parsing_error_localization() {
         let parsing_error =
-            ParsingError::new(ParsingError::TooManyOperands, 123, "".to_owned());
+            ParsingError::new(ParsingError::TooManyOperands, 123, "place_holder".to_owned());
 
         rust_i18n::set_locale("pl");
 
-        println!("{}", parsing_error);
+        let x = parsing_error.to_string();
+
+        assert_eq!("Błąd parsowania na lini:123\tZbyt wiele operandów\tplace_holder", parsing_error.to_string());
 
         rust_i18n::set_locale("en");
-        println!("_____________________________________________--");
-        println!("{}", parsing_error);
 
+
+        assert_eq!("Parsing error at line:123\tToo many operands\tplace_holder", parsing_error.to_string());
        
     }
 }
