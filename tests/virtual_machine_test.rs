@@ -28,7 +28,7 @@ fn assembling_and_running_simple_program1() {
     loop:
         ADD 8
         CMP acc 200
-        JL LOOP
+        JL loop
     HLT
     "#;
 
@@ -56,7 +56,7 @@ fn assembling_and_running_invalid_code_by_subtracting() {
     loop:
         ADD 8
         CMP acc 200
-        JL LOOP
+        JL loop
     HLT
     "#;
     let result = assembler_and_run(program);
@@ -95,7 +95,7 @@ fn assembling_and_running_division_by_subtracting() {
             ADD 1
             MOV acc r2
             CMP r0 0
-            JG LOOP
+            JG loop
         HLT
         "#;
     let result = assembler_and_run(program);
@@ -105,3 +105,5 @@ fn assembling_and_running_division_by_subtracting() {
         Err(e) => println!("{:?}", e),
     }
 }
+
+

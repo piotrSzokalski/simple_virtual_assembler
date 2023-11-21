@@ -199,7 +199,7 @@ impl Assembler {
         let instruction_word = words[0];
         let operands = &words[1..];
 
-        let instruction = match instruction_word.to_ascii_uppercase().as_str() {
+        let instruction = match instruction_word {
             "MOV" => self.parse_binary_instruction(
                 Opcode::MOV,
                 operands,
