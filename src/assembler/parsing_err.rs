@@ -7,7 +7,7 @@ use rust_i18n::t;
 
 use crate::vm::{instruction::Instruction, opcodes::Opcode, operand::Operand};
 
-#[derive(Debug, serde::Deserialize, serde::Serialize, Clone)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, Clone, PartialEq)]
 pub struct ParsingErrorData {
     line: usize,
     message: String,
@@ -19,7 +19,7 @@ impl ParsingErrorData {
     }
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub enum ParsingError {
     EmptyOperand(ParsingErrorData),
     InvalidPortNumber(ParsingErrorData),
@@ -66,21 +66,8 @@ impl ParsingError {
     }
 }
 
-// impl fmt::Display for ParsingError {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         write!(
-//             f,
-//             "{} {}: {}",
-//             t!("error.parsing"),
-//             self.get_data().line,
-//             self.get_data().message
-//         )
-//     }
-// }
-
 impl fmt::Display for ParsingError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-
         let error_type = match self {
             ParsingError::EmptyOperand(_) => t!("error.empty_operand"),
             ParsingError::InvalidPortNumber(_) => t!("error.invalid_port_number"),
@@ -99,7 +86,14 @@ impl fmt::Display for ParsingError {
         let error_data = self.get_data();
 
         // { parsing error } : { line } \t { error type } \t { details/message }
-        write!(f, "{}:{}\t{}\t{}",  t!("error.parsing"), error_data.line, error_type,  error_data.message)
+        write!(
+            f,
+            "{}:{}\t{}\t{}",
+            t!("error.parsing"),
+            error_data.line,
+            error_type,
+            error_data.message
+        )
     }
 }
 
@@ -107,6 +101,8 @@ impl error::Error for ParsingError {}
 
 #[cfg(test)]
 mod tests {
+    use crate::assembler::parsing_err::ParsingErrorData;
+
     use super::ParsingError;
 
     #[test]
@@ -114,24 +110,34 @@ mod tests {
         let parsing_error =
             ParsingError::new(ParsingError::TooManyOperands, 123, "message".to_owned());
 
-        println!("{}", parsing_error);
+        assert_eq!(
+            parsing_error,
+            ParsingError::TooManyOperands(ParsingErrorData::new(123, "message".to_owned()))
+        );
     }
 
     #[test]
     fn test_parsing_error_localization() {
-        let parsing_error =
-            ParsingError::new(ParsingError::TooManyOperands, 123, "place_holder".to_owned());
+        let parsing_error = ParsingError::new(
+            ParsingError::TooManyOperands,
+            123,
+            "place_holder".to_owned(),
+        );
 
         rust_i18n::set_locale("pl");
 
         let x = parsing_error.to_string();
 
-        assert_eq!("Błąd parsowania na lini:123\tZbyt wiele operandów\tplace_holder", parsing_error.to_string());
+        assert_eq!(
+            "Błąd parsowania na lini:123\tZbyt wiele operandów\tplace_holder",
+            parsing_error.to_string()
+        );
 
         rust_i18n::set_locale("en");
 
-
-        assert_eq!("Parsing error at line:123\tToo many operands\tplace_holder", parsing_error.to_string());
-       
+        assert_eq!(
+            "Parsing error at line:123\tToo many operands\tplace_holder",
+            parsing_error.to_string()
+        );
     }
 }

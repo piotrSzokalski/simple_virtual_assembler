@@ -1,11 +1,5 @@
-// pub mod flag;
-// pub mod opcodes;
-// pub mod virtual_machine;
-// pub mod instruction;
-// pub mod operand;
-// pub mod assembler;
 
-//       TEMP LOCALE
+//       LOCALE
 //-------------------------------------------------------
 
 // Load I18n macro, for allow you use `t!` macro in anywhere.
@@ -32,19 +26,6 @@ pub mod assembler;
 #[cfg(test)]
 mod tests {
    // use super::*;
-
-
-   #[test]
-   fn test() {
-      println!("_____________________________________--");
-      println!("{}", t!("hello"));
-
-      rust_i18n::set_locale("pl");
-
-      println!("_____________________________________--");
-      println!("{}", t!("hello"));
-   }
-
 
 
 }
