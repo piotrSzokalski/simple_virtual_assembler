@@ -2,6 +2,8 @@ use std::error;
 use std::fmt;
 use std::ops::IndexMut;
 
+use super::super::language::Language;
+
 use crate::vm::{instruction::Instruction, opcodes::Opcode, operand::Operand};
 
 use super::parsing_err::ParsingError;
@@ -178,7 +180,7 @@ impl Assembler {
 
         program
     }
-    // TODO return error if label is already in use
+    // TODO: return error if label is already in use
     /// Parses label
     ///
     /// ### Arguments
@@ -195,7 +197,8 @@ impl Assembler {
         line: &str,
         current_line_number: usize,
     ) -> Result<Instruction, ParsingError> {
-        let words: Vec<&str> = line.split_whitespace().collect();
+        let line_without_comments: &str = line.split('#').next().unwrap_or("").trim();
+        let words: Vec<&str> = line_without_comments.split_whitespace().collect();
         let instruction_word = words[0];
         let operands = &words[1..];
 
@@ -327,6 +330,10 @@ impl Assembler {
         }
         let label = operands[0];
         Ok(Instruction::new(opcode(label.to_string())))
+    }
+    /// Sets language for parsing error messages
+    pub fn set_language(&mut self, language: Language) {
+        rust_i18n::set_locale(language.string_code());
     }
 }
 #[cfg(test)]
@@ -575,4 +582,27 @@ mod test {
             Err(e) => println!("{:?}", e),
         }
     }
+
+    #[test]
+    fn test_parsing_coments() {
+        let program_text = r#"
+        MOV 10 acc      # Moving 10 to accumulator
+        loop:           # Setting up label
+            ADD 8       # Adding 8 to accumulator
+            CMP acc 20  # Comparing value in accumulator to 20
+            JL loop     # Jumping to 'loop' label if accumulator is lesser
+        HLT             # Stopping execution
+        "#;
+
+        let mut assembler = Assembler::new();
+
+        let result = assembler.parse(program_text);
+
+        println!("________________________________________________---");
+        match result {
+            Ok(v) => println!("{:?}", v),
+            Err(e) => println!("{:?}", e),
+        }
+    }
+
 }

@@ -22,6 +22,7 @@ i18n!("locales");
 
 pub mod vm;
 pub mod assembler;
+pub mod language;
 
 #[cfg(test)]
 mod tests {

@@ -2,6 +2,7 @@
 
 use std::fmt::{self, Display, Formatter, Result};
 
+use std::usize;
 use std::{collections::HashMap, ops::IndexMut};
 
 use crate::vm::{
@@ -119,6 +120,22 @@ impl VirtualMachine {
             self.labels.clone(),
             self.program.clone(),
         )
+    }
+
+    pub fn set_pc(&mut self,pc: usize) {
+        self.pc = pc;
+    }
+
+    pub fn reset_pc(&mut self) {
+        self.pc = 0;
+    }
+
+    pub fn clear_registers(&mut self) {
+        self.pc = 0;
+        self.acc = 0;
+        self.flag = Flag::EQUAL;
+        self.r.iter_mut().for_each(|item| *item = 0);
+        self.p.iter_mut().for_each(|item| *item = 0);
     }
 
     /// Copies operand into register
@@ -298,6 +315,14 @@ impl VirtualMachine {
             running = self.execute();
         }
     }
+
+        /// Runs all instructions in given program
+        pub fn run_delayed(&mut self) {
+            let mut running = true;
+            while running {
+                running = self.execute();
+            }
+        }
 }
 
 impl fmt::Display for VirtualMachine {
