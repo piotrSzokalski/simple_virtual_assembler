@@ -23,7 +23,7 @@ i18n!("locales");
 pub mod vm;
 pub mod assembler;
 pub mod language;
-
+pub mod components;
 #[cfg(test)]
 mod tests {
    // use super::*;

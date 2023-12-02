@@ -17,7 +17,7 @@ pub enum Opcode {
     /// Copy value of first argument ot second
     MOV(Operand, Operand),
     /// Sleep
-    SPL(Operand),
+    SLP(Operand),
     // Add operand to acc
     ADD(Operand),
     /// Subtract operand from acc
