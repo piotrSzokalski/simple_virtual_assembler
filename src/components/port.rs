@@ -5,6 +5,8 @@ use serde::{
 };
 use std::sync::{Arc, Mutex};
 
+use super::connection::{self, Connection};
+
 /// Port used for communication between vm and other components
 #[derive(Clone, Debug)]
 pub enum Port {
@@ -28,6 +30,10 @@ impl Port {
             Port::Connected(value) => *value.lock().unwrap() = new_value,
             Port::Disconnected(value) => *value = new_value,
         }
+    }
+
+    pub fn connect(&mut self, connection: &mut Connection) {
+        *self = Port::Connected(connection.get());
     }
 }
 

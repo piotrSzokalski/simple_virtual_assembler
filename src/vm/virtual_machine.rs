@@ -6,7 +6,8 @@ use std::time::Duration;
 use std::{collections::HashMap, ops::IndexMut};
 use std::{thread, usize};
 
-use crate::components;
+use crate::components::{self, connection};
+use crate::components::connection::Connection;
 use crate::components::port::Port;
 
 use crate::vm::{
@@ -150,6 +151,19 @@ impl VirtualMachine {
         //TODO:
         //self.p.iter_mut().for_each(|item| *item = 0);
     }
+    /// Connects vm with connection to shared data across threads
+    /// 
+    /// ### Arguments
+    /// 
+    /// * index - index of port
+    /// * connection - reference to connection
+    /// 
+    pub fn connect(&mut self, index: usize , connection: &mut Connection) {
+        println!("CONNECTION CALLED");
+        self.p[index].connect(connection);
+    }
+    //________________________________________________--
+
 
     //TODO:
     fn sleep(&mut self, duration: Operand) {
@@ -680,6 +694,39 @@ mod tests {
         // println!("{:?}", vm.r[2]);
 
         assert_eq!(vm.r[2], 4);
+    }
+
+    //TODO:
+    // add aspersion, for now apers to be working fine
+    #[test]
+    pub fn test_ports() {
+
+        // ADD 10
+        // MOV acc p0
+        // MOV p0 p1
+        // MOV p1 r1
+        // ADD p0
+        // HLT
+
+        // Expected state:
+        // acc: 20, r: [0, 10, 0, 0] p: [10, 10, 0, 0]
+
+        let program = vec![
+            Instruction::new(Opcode::ADD(Operand::IntegerValue(10))),
+            Instruction::new(Opcode::MOV(Operand::ACC, Operand::PortRegister(0))),
+            Instruction::new(Opcode::MOV(Operand::PortRegister(0), Operand::PortRegister(1))),
+            Instruction::new(Opcode::MOV(Operand::PortRegister(1), Operand::GeneralRegister(1))),
+            Instruction::new(Opcode::ADD(Operand::PortRegister(0))),
+            Instruction::new(Opcode::HLT)
+        ];
+        
+
+        let mut vm = VirtualMachine::new_with_program(program);
+
+        vm.run();
+
+        println!("{}", vm);
+
     }
 }
 

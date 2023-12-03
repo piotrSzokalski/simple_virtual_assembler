@@ -6,6 +6,17 @@ pub struct Connection {
     data: Arc<Mutex<i32>>,
 }
 
+impl Connection {
+
+    pub fn new() -> Connection {
+        Connection { data: Arc::new(Mutex::new(0)) }
+    }
+
+    pub fn get(&mut self) -> Arc<Mutex<i32>> {
+        self.data.clone()
+    }
+}
+
 impl Serialize for Connection {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
