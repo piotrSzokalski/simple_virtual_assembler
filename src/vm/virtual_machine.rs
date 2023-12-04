@@ -2,13 +2,15 @@
 
 use std::fmt::{self, Display, Formatter, Result};
 
+use std::sync::{Arc, Mutex};
+use std::thread::JoinHandle;
 use std::time::Duration;
 use std::{collections::HashMap, ops::IndexMut};
 use std::{thread, usize};
 
-use crate::components::{self, connection};
 use crate::components::connection::Connection;
 use crate::components::port::Port;
+use crate::components::{self, connection};
 
 use crate::vm::{
     flag::Flag,
@@ -16,6 +18,17 @@ use crate::vm::{
     opcodes::{JMPCondition, Opcode},
     operand::Operand,
 };
+
+// Sate of vm
+
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq, Clone, Copy)]
+pub enum VmStatus {
+    Initial,
+    Running,
+    Stopped,
+    Finished,
+}
+
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct VirtualMachine {
     /// Program counter register
@@ -32,6 +45,10 @@ pub struct VirtualMachine {
     labels: HashMap<String, usize>,
     /// Vector of instructions to be executed
     program: Vec<Instruction>,
+    /// State of vm
+    status: VmStatus,
+    /// Delay between instruction in ms ( sleep between execution )
+    delay_ms: u32
 }
 
 impl VirtualMachine {
@@ -48,6 +65,8 @@ impl VirtualMachine {
 
             labels: HashMap::new(),
             program: Vec::new(),
+            status: VmStatus::Initial,
+            delay_ms: 0
         }
     }
     /// Create an instance of VM
@@ -67,11 +86,21 @@ impl VirtualMachine {
             p: [Port::new(0), Port::new(0), Port::new(0), Port::new(0)],
             program,
             labels: HashMap::new(),
+            status: VmStatus::Initial,
+            delay_ms: 0,
         }
     }
 
     pub fn load_program(&mut self, program: Vec<Instruction>) {
         self.program = program;
+    }
+
+    pub fn set_delay(&mut self, delay_ms: u32) {
+        self.delay_ms = delay_ms
+    }
+
+    pub fn get_delay(&mut self) -> u32 {
+        self.delay_ms
     }
 
     pub fn get_acc(&self) -> i32 {
@@ -100,7 +129,7 @@ impl VirtualMachine {
     }
 
     /// Gets state of all register (acc, pc, flag, r, p)
-    pub fn get_state(&self) -> (i32, usize, Flag, [i32; 4], [Port; 4]) {
+    pub fn get_registers_all(&self) -> (i32, usize, Flag, [i32; 4], [Port; 4]) {
         (self.acc, self.pc, self.flag, self.r, self.p.clone())
     }
 
@@ -112,7 +141,11 @@ impl VirtualMachine {
         self.program.clone()
     }
 
-    /// Gets state of virtual machine (acc, pc, flag, r, p, labels, program)
+    pub fn get_status(&self) -> VmStatus {
+        self.status
+    }
+
+    /// Gets full state of virtual machine (acc, pc, flag, r, p, labels, program)
     pub fn get_state_full(
         &self,
     ) -> (
@@ -152,18 +185,17 @@ impl VirtualMachine {
         //self.p.iter_mut().for_each(|item| *item = 0);
     }
     /// Connects vm with connection to shared data across threads
-    /// 
+    ///
     /// ### Arguments
-    /// 
+    ///
     /// * index - index of port
     /// * connection - reference to connection
-    /// 
-    pub fn connect(&mut self, index: usize , connection: &mut Connection) {
+    ///
+    pub fn connect(&mut self, index: usize, connection: &mut Connection) {
         println!("CONNECTION CALLED");
         self.p[index].connect(connection);
     }
     //________________________________________________--
-
 
     //TODO:
     fn sleep(&mut self, duration: Operand) {
@@ -361,23 +393,54 @@ impl VirtualMachine {
         true
     }
 
-    /// Runs all instructions in given program
-    pub fn run(&mut self) {
-        let mut running = true;
-        while running {
-            running = self.execute();
-        }
+    /// Used to delay execution by sleeping current thread
+    /// 
+    /// Another solution may more appropriate but sleep will work for now
+    pub fn delay(&mut self, ms: u32) {
+        thread::sleep(Duration::from_millis(ms.into()));
     }
 
     /// Runs all instructions in given program
-    pub fn run_delayed(&mut self, delay_mil: u64) {
+    pub fn run(&mut self) {
         let mut running = true;
+        self.status = VmStatus::Running;
         while running {
             running = self.execute();
-            //TODO:
-            thread::sleep(Duration::from_millis(delay_mil));
+            self.delay(self.delay_ms);
         }
+        self.status = VmStatus::Finished;
     }
+
+    /// Starts vm on another thread
+    pub fn start(vm: Arc<Mutex<VirtualMachine>>) -> JoinHandle<()> {
+        let handle = thread::spawn(move || {
+            let mut running = true;
+            {
+                let mut vm = vm.lock().unwrap();
+                vm.status = VmStatus::Running;
+            }
+            while running {
+                {
+                    let mut vm = vm.lock().unwrap();
+                    if vm.status == VmStatus::Running {
+                        running = vm.execute();
+                        let delay = vm.get_delay();
+                        //println!("Test");
+                        vm.delay(delay);
+                    }
+                   
+                }
+            }
+            {
+                let mut vm = vm.lock().unwrap();
+                vm.status = VmStatus::Finished;
+            }
+        });
+        handle
+    }
+    /// Stops vm running on another thread
+    pub fn stop(vm: Arc<Mutex<VirtualMachine>>) {}
+    pub fn halt(vm: Arc<Mutex<VirtualMachine>>) {}
 }
 
 impl fmt::Display for VirtualMachine {
@@ -700,7 +763,6 @@ mod tests {
     // add aspersion, for now apers to be working fine
     #[test]
     pub fn test_ports() {
-
         // ADD 10
         // MOV acc p0
         // MOV p0 p1
@@ -714,19 +776,23 @@ mod tests {
         let program = vec![
             Instruction::new(Opcode::ADD(Operand::IntegerValue(10))),
             Instruction::new(Opcode::MOV(Operand::ACC, Operand::PortRegister(0))),
-            Instruction::new(Opcode::MOV(Operand::PortRegister(0), Operand::PortRegister(1))),
-            Instruction::new(Opcode::MOV(Operand::PortRegister(1), Operand::GeneralRegister(1))),
+            Instruction::new(Opcode::MOV(
+                Operand::PortRegister(0),
+                Operand::PortRegister(1),
+            )),
+            Instruction::new(Opcode::MOV(
+                Operand::PortRegister(1),
+                Operand::GeneralRegister(1),
+            )),
             Instruction::new(Opcode::ADD(Operand::PortRegister(0))),
-            Instruction::new(Opcode::HLT)
+            Instruction::new(Opcode::HLT),
         ];
-        
 
         let mut vm = VirtualMachine::new_with_program(program);
 
         vm.run();
 
         println!("{}", vm);
-
     }
 }
 

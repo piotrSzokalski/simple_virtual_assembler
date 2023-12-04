@@ -1,11 +1,17 @@
-use std::thread;
+use std::{
+    sync::{Arc, Mutex},
+    thread,
+    time::Duration,
+};
 
 use simple_virtual_assembler::{
     assembler::assembler::Assembler,
     components::{connection::Connection, port::Port},
     vm::{
-        instruction::Instruction, opcodes::Opcode, operand::Operand,
-        virtual_machine::VirtualMachine,
+        instruction::Instruction,
+        opcodes::Opcode,
+        operand::Operand,
+        virtual_machine::{VirtualMachine, VmStatus},
     },
 };
 
@@ -74,7 +80,7 @@ fn test_basic_communication_between_vms() {
     //
     // for this test vm1 counts to 200 to simulate some computation
     // vm2 awaits it and divides it by 2
-    // 
+    //
     let vm1_code = r#"
     sum:                #   label used to denote block of code responsible for producing input to vm2 
         MOV 0 p0        #   inform vm2 that value is not ready
@@ -102,8 +108,8 @@ fn test_basic_communication_between_vms() {
 
     // Connection to indicate if value is ready to be read
     let communication_connection = Connection::new();
-    let mut communication_connection_vm1 =communication_connection.clone();
-    let mut communication_connection_vm2 =communication_connection.clone();
+    let mut communication_connection_vm1 = communication_connection.clone();
+    let mut communication_connection_vm2 = communication_connection.clone();
     // Connection for sending data
     let data_connection = Connection::new();
     let mut data_connection_vm1 = data_connection.clone();
@@ -138,4 +144,72 @@ fn test_basic_communication_between_vms() {
 
     handel1.join().unwrap();
     handel2.join().unwrap();
+}
+
+#[test]
+fn test_vm_start() {
+    let code = r#"
+    sum:                #   label used to denote block of code responsible for producing input to vm2 
+        MOV 0 p0        #   inform vm2 that value is not ready
+        ADD 1           #   increment by one
+        CMP acc 200     #   | loop until acc is equal to 200
+        JL sum          #   |
+    MOV 7 p0            #   inform vm2 that value is ready
+    MOV acc p1          #   send value to v2
+    HLT                 #
+    
+    "#;
+    let mut assembler = Assembler::new();
+
+    let program = assembler.parse(code).unwrap();
+
+    let vm = VirtualMachine::new_with_program(program);
+    let vm = Arc::new(Mutex::new(vm));
+    let vm_copy = vm.clone();
+    let handle = VirtualMachine::start(vm);
+    handle.join().unwrap();
+    println!("{:?}", vm_copy);
+}
+
+#[test]
+fn test_vm_start_delayed() {
+    let code = r#"
+    sum:                #   label used to denote block of code responsible for producing input to vm2 
+        MOV 0 p0        #   inform vm2 that value is not ready
+        ADD 1           #   increment by one
+        CMP acc 20     #   | loop until acc is equal to 200
+        JL sum          #   |
+    MOV 7 p0            #   inform vm2 that value is ready
+    MOV acc p1          #   send value to v2
+    HLT                 #
+    
+    "#;
+    let mut assembler = Assembler::new();
+
+    let program = assembler.parse(code).unwrap();
+
+    let mut vm = VirtualMachine::new_with_program(program);
+    vm.set_delay(200);
+    let vm = Arc::new(Mutex::new(vm));
+    //vm.lock().unwrap().set_delay(2000);
+    let vm_copy = vm.clone();
+    let handle = VirtualMachine::start(vm);
+
+    let mut done = false;
+    let mut acc = -1;
+    while !done {
+        println!("Reading data");
+        {
+            let data = vm_copy.lock().unwrap();
+            acc = data.get_acc();
+            if data.get_status() == VmStatus::Finished {
+                done = true;
+            }
+        }
+        println!("{}", acc);
+        thread::sleep(Duration::from_millis(100))
+    }
+
+    handle.join().unwrap();
+    println!("{:?}", vm_copy);
 }
