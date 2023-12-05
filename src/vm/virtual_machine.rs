@@ -48,7 +48,7 @@ pub struct VirtualMachine {
     /// State of vm
     status: VmStatus,
     /// Delay between instruction in ms ( sleep between execution )
-    delay_ms: u32
+    delay_ms: u32,
 }
 
 impl VirtualMachine {
@@ -66,7 +66,7 @@ impl VirtualMachine {
             labels: HashMap::new(),
             program: Vec::new(),
             status: VmStatus::Initial,
-            delay_ms: 0
+            delay_ms: 0,
         }
     }
     /// Create an instance of VM
@@ -394,7 +394,7 @@ impl VirtualMachine {
     }
 
     /// Used to delay execution by sleeping current thread
-    /// 
+    ///
     /// Another solution may more appropriate but sleep will work for now
     pub fn delay(&mut self, ms: u32) {
         thread::sleep(Duration::from_millis(ms.into()));
@@ -428,7 +428,6 @@ impl VirtualMachine {
                         //println!("Test");
                         vm.delay(delay);
                     }
-                   
                 }
             }
             {
@@ -439,8 +438,27 @@ impl VirtualMachine {
         handle
     }
     /// Stops vm running on another thread
-    pub fn stop(vm: Arc<Mutex<VirtualMachine>>) {}
-    pub fn halt(vm: Arc<Mutex<VirtualMachine>>) {}
+    pub fn stop(vm: Arc<Mutex<VirtualMachine>>) {
+        vm.lock().unwrap().status = VmStatus::Stopped;
+    }
+    pub fn halt(vm: Arc<Mutex<VirtualMachine>>) {
+        vm.lock().unwrap().status = VmStatus::Finished;
+    }
+
+    /// Helper function to create shared vm
+    pub fn new_shared() -> (Arc<Mutex<VirtualMachine>>, Arc<Mutex<VirtualMachine>>) {
+        let vm = Arc::new(Mutex::new(VirtualMachine::new()));
+
+        (vm.clone(), vm)
+    }
+
+    /// Helper function to create shared vm
+    pub fn new_shared_with_program(
+        program: Vec<Instruction>,
+    ) -> (Arc<Mutex<VirtualMachine>>, Arc<Mutex<VirtualMachine>>) {
+        let vm = Arc::new(Mutex::new(VirtualMachine::new_with_program(program)));
+        (vm.clone(), vm)
+    }
 }
 
 impl fmt::Display for VirtualMachine {
