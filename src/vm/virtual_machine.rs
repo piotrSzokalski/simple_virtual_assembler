@@ -19,8 +19,7 @@ use crate::vm::{
     operand::Operand,
 };
 
-// Sate of vm
-
+/// Status of vm
 #[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq, Clone, Copy)]
 pub enum VmStatus {
     Initial,
@@ -45,7 +44,7 @@ pub struct VirtualMachine {
     labels: HashMap<String, usize>,
     /// Vector of instructions to be executed
     program: Vec<Instruction>,
-    /// State of vm
+    /// Status of vm
     status: VmStatus,
     /// Delay between instruction in ms ( sleep between execution )
     delay_ms: u32,
@@ -192,7 +191,6 @@ impl VirtualMachine {
     /// * connection - reference to connection
     ///
     pub fn connect(&mut self, index: usize, connection: &mut Connection) {
-        println!("CONNECTION CALLED");
         self.p[index].connect(connection);
     }
     //________________________________________________--
@@ -446,6 +444,14 @@ impl VirtualMachine {
     }
 
     /// Helper function to create shared vm
+    ///
+    /// # Examples
+    ///
+    /// ```rs
+    /// let (vm2, vm2_copy) = VirtualMachine::new_shared_with_program(program2);
+    /// let handel2 = VirtualMachine::start(vm2);
+    /// println!("{}", vm2_copy.lock().unwrap());
+    /// ```
     pub fn new_shared() -> (Arc<Mutex<VirtualMachine>>, Arc<Mutex<VirtualMachine>>) {
         let vm = Arc::new(Mutex::new(VirtualMachine::new()));
 
