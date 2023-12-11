@@ -394,7 +394,7 @@ impl VirtualMachine {
     /// Used to delay execution by sleeping current thread
     ///
     /// Another solution may more appropriate but sleep will work for now
-    pub fn delay(&mut self, ms: u32) {
+    pub fn delay(ms: u32) {
         thread::sleep(Duration::from_millis(ms.into()));
     }
 
@@ -404,7 +404,8 @@ impl VirtualMachine {
         self.status = VmStatus::Running;
         while running {
             running = self.execute();
-            self.delay(self.delay_ms);
+            //self.delay(self.delay_ms);
+            VirtualMachine::delay(self.delay_ms)
         }
         self.status = VmStatus::Finished;
     }
@@ -417,16 +418,24 @@ impl VirtualMachine {
                 let mut vm = vm.lock().unwrap();
                 vm.status = VmStatus::Running;
             }
+            let mut delay = 0;
             while running {
                 {
-                    let mut vm = vm.lock().unwrap();
+                    let mut vm: std::sync::MutexGuard<'_, VirtualMachine> = vm.lock().unwrap();
                     if vm.status == VmStatus::Running {
                         running = vm.execute();
-                        let delay = vm.get_delay();
+
+                        delay = vm.get_delay();
+
+                        //let delay = vm.get_delay();
                         //println!("Test");
-                        vm.delay(delay);
+
+                        //FIXME:
+                        // causes deadlock
+                        //vm.delay(delay);
                     }
                 }
+                VirtualMachine::delay(delay)
             }
             {
                 let mut vm = vm.lock().unwrap();
