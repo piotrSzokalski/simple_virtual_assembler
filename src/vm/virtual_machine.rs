@@ -180,7 +180,7 @@ impl VirtualMachine {
         self.acc = 0;
         self.flag = Flag::EQUAL;
         self.r.iter_mut().for_each(|item| *item = 0);
-        //TODO:
+        //TODO: (maybe)
         //self.p.iter_mut().for_each(|item| *item = 0);
     }
     /// Connects vm with connection to shared data across threads
@@ -455,7 +455,10 @@ impl VirtualMachine {
 
     /// Halts vm
     pub fn halt(vm: Arc<Mutex<VirtualMachine>>) {
-        vm.lock().unwrap().status = VmStatus::Finished;
+        {
+            vm.lock().unwrap().status = VmStatus::Finished;
+        }
+        vm.lock().unwrap().clear_registers();
     }
 
     /// Helper function to create shared vm
