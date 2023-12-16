@@ -448,6 +448,12 @@ impl VirtualMachine {
     pub fn stop(vm: Arc<Mutex<VirtualMachine>>) {
         vm.lock().unwrap().status = VmStatus::Stopped;
     }
+    /// Continues executing code
+    pub fn resume(vm: Arc<Mutex<VirtualMachine>>) {
+        vm.lock().unwrap().status = VmStatus::Running;
+    }
+
+    /// Halts vm
     pub fn halt(vm: Arc<Mutex<VirtualMachine>>) {
         vm.lock().unwrap().status = VmStatus::Finished;
     }
