@@ -199,63 +199,71 @@ impl Assembler {
     ) -> Result<Instruction, ParsingError> {
         let line_without_comments: &str = line.split('#').next().unwrap_or("").trim();
         let words: Vec<&str> = line_without_comments.split_whitespace().collect();
-        let instruction_word = words[0];
-        let operands = &words[1..];
+        //let ;instruction_word = words[0]    // <- FIXME:
+        //let operands = &words[1..];      // Panincs
+        if let Some(instruction_word) = words.get(0) {
+            let operands = &words[1..];
+            let instruction_word = words[0];
+            let instruction = match instruction_word {
+                "MOV" => self.parse_binary_instruction(
+                    Opcode::MOV,
+                    operands,
+                    current_line_number,
+                    (false, true),
+                ),
 
-        let instruction = match instruction_word {
-            "MOV" => self.parse_binary_instruction(
-                Opcode::MOV,
-                operands,
+                "ADD" => self.parse_unary_instruction(Opcode::ADD, operands, current_line_number),
+                "SUB" => self.parse_unary_instruction(Opcode::SUB, operands, current_line_number),
+                "MUL" => self.parse_unary_instruction(Opcode::MUL, operands, current_line_number),
+                "DIV" => self.parse_unary_instruction(Opcode::DIV, operands, current_line_number),
+                "MOD" => self.parse_unary_instruction(Opcode::MOD, operands, current_line_number),
+
+                "AND" => self.parse_unary_instruction(Opcode::AND, operands, current_line_number),
+                "OR" => self.parse_unary_instruction(Opcode::OR, operands, current_line_number),
+                "XOR" => self.parse_unary_instruction(Opcode::XOR, operands, current_line_number),
+                "NOT" => Err(ParsingError::new(
+                    ParsingError::NotImplanted,
+                    current_line_number,
+                    "".to_string(),
+                )), //Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
+
+                "CMP" => self.parse_binary_instruction(
+                    Opcode::CMP,
+                    operands,
+                    current_line_number,
+                    (false, false),
+                ), //TODO:
+
+                "JE" => self.parse_jump(Opcode::JE, operands, current_line_number),
+                "JL" => self.parse_jump(Opcode::JL, operands, current_line_number),
+                "JG" => self.parse_jump(Opcode::JG, operands, current_line_number),
+
+                "HLT" => Ok(Instruction::new(Opcode::HLT)),
+                "NOP" => Err(ParsingError::new(
+                    ParsingError::NotImplanted,
+                    current_line_number,
+                    "".to_string(),
+                )), //Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
+                "SPL" => Err(ParsingError::new(
+                    ParsingError::NotImplanted,
+                    current_line_number,
+                    "".to_string(),
+                )), //Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
+                label if label.ends_with(':') => self.parse_label(label, current_line_number),
+                _ => Err(ParsingError::new(
+                    ParsingError::Unknown,
+                    current_line_number,
+                    "".to_string(),
+                )), //Err(ParsingError::new("Unknown error", current_line_number)),
+            };
+            instruction
+        } else {
+            return Err(ParsingError::new(
+                ParsingError::Empty,
                 current_line_number,
-                (false, true),
-            ),
-
-            "ADD" => self.parse_unary_instruction(Opcode::ADD, operands, current_line_number),
-            "SUB" => self.parse_unary_instruction(Opcode::SUB, operands, current_line_number),
-            "MUL" => self.parse_unary_instruction(Opcode::MUL, operands, current_line_number),
-            "DIV" => self.parse_unary_instruction(Opcode::DIV, operands, current_line_number),
-            "MOD" => self.parse_unary_instruction(Opcode::MOD, operands, current_line_number),
-
-            "AND" => self.parse_unary_instruction(Opcode::AND, operands, current_line_number),
-            "OR" => self.parse_unary_instruction(Opcode::OR, operands, current_line_number),
-            "XOR" => self.parse_unary_instruction(Opcode::XOR, operands, current_line_number),
-            "NOT" => Err(ParsingError::new(
-                ParsingError::NotImplanted,
-                current_line_number,
-                "".to_string(),
-            )), //Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
-
-            "CMP" => self.parse_binary_instruction(
-                Opcode::CMP,
-                operands,
-                current_line_number,
-                (false, false),
-            ), //TODO:
-
-            "JE" => self.parse_jump(Opcode::JE, operands, current_line_number),
-            "JL" => self.parse_jump(Opcode::JL, operands, current_line_number),
-            "JG" => self.parse_jump(Opcode::JG, operands, current_line_number),
-
-            "HLT" => Ok(Instruction::new(Opcode::HLT)),
-            "NOP" => Err(ParsingError::new(
-                ParsingError::NotImplanted,
-                current_line_number,
-                "".to_string(),
-            )), //Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
-            "SPL" => Err(ParsingError::new(
-                ParsingError::NotImplanted,
-                current_line_number,
-                "".to_string(),
-            )), //Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
-            label if label.ends_with(':') => self.parse_label(label, current_line_number),
-            _ => Err(ParsingError::new(
-                ParsingError::Unknown,
-                current_line_number,
-                "".to_string(),
-            )), //Err(ParsingError::new("Unknown error", current_line_number)),
-        };
-
-        instruction
+                "FIXME".to_string(),
+            ));
+        }
     }
 
     fn parse_binary_instruction(
@@ -604,5 +612,4 @@ mod test {
             Err(e) => println!("{:?}", e),
         }
     }
-
 }
