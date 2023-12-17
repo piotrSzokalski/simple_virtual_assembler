@@ -175,6 +175,7 @@ impl Assembler {
         let program: Result<Vec<Instruction>, ParsingError> = program_text
             .lines()
             .enumerate()
+            .filter(|(_, line)| !line.trim().is_empty()) 
             .map(|(current_line_number, line)| self.parse_instruction(line, current_line_number))
             .collect();
 
@@ -592,9 +593,32 @@ mod test {
     }
 
     #[test]
-    fn test_parsing_coments() {
+    fn test_parsing_comments() {
         let program_text = r#"
         MOV 10 acc      # Moving 10 to accumulator
+        loop:           # Setting up label
+            ADD 8       # Adding 8 to accumulator
+            CMP acc 20  # Comparing value in accumulator to 20
+            JL loop     # Jumping to 'loop' label if accumulator is lesser
+        HLT             # Stopping execution
+        "#;
+
+        let mut assembler = Assembler::new();
+
+        let result = assembler.parse(program_text);
+
+        println!("________________________________________________---");
+        match result {
+            Ok(v) => println!("{:?}", v),
+            Err(e) => println!("{:?}", e),
+        }
+    }
+
+    #[test]
+    fn test_parsing_empty_line() {
+        let program_text = r#"
+        MOV 10 acc      # Moving 10 to accumulator
+
         loop:           # Setting up label
             ADD 8       # Adding 8 to accumulator
             CMP acc 20  # Comparing value in accumulator to 20
