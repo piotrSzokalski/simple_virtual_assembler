@@ -193,6 +193,13 @@ impl VirtualMachine {
     pub fn connect(&mut self, index: usize, connection: &mut Connection) {
         self.p[index].connect(connection);
     }
+    /// Disconnects from connection
+    pub fn disconnect(&mut self, index: usize) {
+        let value = self.p[index].get();
+
+        self.p[index] = Port::Disconnected(value);
+    }
+
     //________________________________________________--
 
     //TODO:
