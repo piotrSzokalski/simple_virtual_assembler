@@ -180,7 +180,7 @@ impl VirtualMachine {
         self.acc = 0;
         self.flag = Flag::EQUAL;
         self.r.iter_mut().for_each(|item| *item = 0);
-        //TODO:
+        //TODO: (maybe)
         //self.p.iter_mut().for_each(|item| *item = 0);
     }
     /// Connects vm with connection to shared data across threads
@@ -193,6 +193,15 @@ impl VirtualMachine {
     pub fn connect(&mut self, index: usize, connection: &mut Connection) {
         self.p[index].connect(connection);
     }
+    /// Disconnects from connection
+    pub fn disconnect(&mut self, index: usize) {
+        let value = match &self.p[index] {
+            Port::Connected(_) => self.p[index].get(),
+            Port::Disconnected(value) => *value,
+        };
+        self.p[index] = Port::Disconnected(value);
+    }
+
     //________________________________________________--
 
     //TODO:
@@ -448,8 +457,17 @@ impl VirtualMachine {
     pub fn stop(vm: Arc<Mutex<VirtualMachine>>) {
         vm.lock().unwrap().status = VmStatus::Stopped;
     }
+    /// Continues executing code
+    pub fn resume(vm: Arc<Mutex<VirtualMachine>>) {
+        vm.lock().unwrap().status = VmStatus::Running;
+    }
+
+    /// Halts vm
     pub fn halt(vm: Arc<Mutex<VirtualMachine>>) {
-        vm.lock().unwrap().status = VmStatus::Finished;
+        {
+            vm.lock().unwrap().status = VmStatus::Finished;
+        }
+        vm.lock().unwrap().clear_registers();
     }
 
     /// Helper function to create shared vm

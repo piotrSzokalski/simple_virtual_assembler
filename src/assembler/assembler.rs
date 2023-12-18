@@ -175,6 +175,7 @@ impl Assembler {
         let program: Result<Vec<Instruction>, ParsingError> = program_text
             .lines()
             .enumerate()
+            .filter(|(_, line)| !line.trim().is_empty())
             .map(|(current_line_number, line)| self.parse_instruction(line, current_line_number))
             .collect();
 
@@ -205,46 +206,62 @@ impl Assembler {
             let operands = &words[1..];
             let instruction_word = words[0];
             let instruction = match instruction_word {
-                "MOV" => self.parse_binary_instruction(
+                "MOV" | "mov" => self.parse_binary_instruction(
                     Opcode::MOV,
                     operands,
                     current_line_number,
                     (false, true),
                 ),
 
-                "ADD" => self.parse_unary_instruction(Opcode::ADD, operands, current_line_number),
-                "SUB" => self.parse_unary_instruction(Opcode::SUB, operands, current_line_number),
-                "MUL" => self.parse_unary_instruction(Opcode::MUL, operands, current_line_number),
-                "DIV" => self.parse_unary_instruction(Opcode::DIV, operands, current_line_number),
-                "MOD" => self.parse_unary_instruction(Opcode::MOD, operands, current_line_number),
+                "ADD" | "add" => {
+                    self.parse_unary_instruction(Opcode::ADD, operands, current_line_number)
+                }
+                "SUB" | "sub" => {
+                    self.parse_unary_instruction(Opcode::SUB, operands, current_line_number)
+                }
+                "MUL" | "mul" => {
+                    self.parse_unary_instruction(Opcode::MUL, operands, current_line_number)
+                }
+                "DIV" | "div" => {
+                    self.parse_unary_instruction(Opcode::DIV, operands, current_line_number)
+                }
+                "MOD" | "mod" => {
+                    self.parse_unary_instruction(Opcode::MOD, operands, current_line_number)
+                }
 
-                "AND" => self.parse_unary_instruction(Opcode::AND, operands, current_line_number),
-                "OR" => self.parse_unary_instruction(Opcode::OR, operands, current_line_number),
-                "XOR" => self.parse_unary_instruction(Opcode::XOR, operands, current_line_number),
-                "NOT" => Err(ParsingError::new(
+                "AND" | "and" => {
+                    self.parse_unary_instruction(Opcode::AND, operands, current_line_number)
+                }
+                "OR" | "or" => {
+                    self.parse_unary_instruction(Opcode::OR, operands, current_line_number)
+                }
+                "XOR" | "xor" => {
+                    self.parse_unary_instruction(Opcode::XOR, operands, current_line_number)
+                }
+                "NOT" | "not" => Err(ParsingError::new(
                     ParsingError::NotImplanted,
                     current_line_number,
                     "".to_string(),
                 )), //Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
 
-                "CMP" => self.parse_binary_instruction(
+                "CMP" | "cmp" => self.parse_binary_instruction(
                     Opcode::CMP,
                     operands,
                     current_line_number,
                     (false, false),
                 ), //TODO:
 
-                "JE" => self.parse_jump(Opcode::JE, operands, current_line_number),
-                "JL" => self.parse_jump(Opcode::JL, operands, current_line_number),
-                "JG" => self.parse_jump(Opcode::JG, operands, current_line_number),
+                "JE" | "je" => self.parse_jump(Opcode::JE, operands, current_line_number),
+                "JL" | "jl" => self.parse_jump(Opcode::JL, operands, current_line_number),
+                "JG" | "jg" => self.parse_jump(Opcode::JG, operands, current_line_number),
 
-                "HLT" => Ok(Instruction::new(Opcode::HLT)),
-                "NOP" => Err(ParsingError::new(
+                "HLT" | "hlt" => Ok(Instruction::new(Opcode::HLT)),
+                "NOP" | "nop" => Err(ParsingError::new(
                     ParsingError::NotImplanted,
                     current_line_number,
                     "".to_string(),
                 )), //Err(ParsingError::new("NOT IMPLEMENTED", current_line_number)),
-                "SPL" => Err(ParsingError::new(
+                "SPL" | "spl" => Err(ParsingError::new(
                     ParsingError::NotImplanted,
                     current_line_number,
                     "".to_string(),
@@ -592,7 +609,7 @@ mod test {
     }
 
     #[test]
-    fn test_parsing_coments() {
+    fn test_parsing_comments() {
         let program_text = r#"
         MOV 10 acc      # Moving 10 to accumulator
         loop:           # Setting up label
@@ -605,7 +622,53 @@ mod test {
         let mut assembler = Assembler::new();
 
         let result = assembler.parse(program_text);
+        assert!(result.is_ok());
+        println!("________________________________________________---");
+        match result {
+            Ok(v) => println!("{:?}", v),
+            Err(e) => println!("{:?}", e),
+        }
+    }
 
+    #[test]
+    fn test_parsing_empty_line() {
+        let program_text = r#"
+        MOV 10 acc      # Moving 10 to accumulator
+
+        loop:           # Setting up label
+            ADD 8       # Adding 8 to accumulator
+            CMP acc 20  # Comparing value in accumulator to 20
+            JL loop     # Jumping to 'loop' label if accumulator is lesser
+        HLT             # Stopping execution
+        "#;
+
+        let mut assembler = Assembler::new();
+
+        let result = assembler.parse(program_text);
+        assert!(result.is_ok());
+        println!("________________________________________________---");
+        match result {
+            Ok(v) => println!("{:?}", v),
+            Err(e) => println!("{:?}", e),
+        }
+    }
+
+    #[test]
+    fn test_lower_case_code_parsing() {
+        let program_text = r#"
+        mov 10 acc      # Moving 10 to accumulator
+
+        loop:           # Setting up label
+            add 8       # Adding 8 to accumulator
+            cmp acc 20  # Comparing value in accumulator to 20
+            jl loop     # Jumping to 'loop' label if accumulator is lesser
+        hlt             # Stopping execution
+        "#;
+
+        let mut assembler = Assembler::new();
+
+        let result = assembler.parse(program_text);
+        assert!(result.is_ok());
         println!("________________________________________________---");
         match result {
             Ok(v) => println!("{:?}", v),

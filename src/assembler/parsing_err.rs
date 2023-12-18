@@ -90,7 +90,7 @@ impl fmt::Display for ParsingError {
             f,
             "{}:{}\t{}\t{}",
             t!("error.parsing"),
-            error_data.line,
+            error_data.line + 1,
             error_type,
             error_data.message
         )
@@ -129,14 +129,14 @@ mod tests {
         let x = parsing_error.to_string();
 
         assert_eq!(
-            "Błąd parsowania na lini:123\tZbyt wiele operandów\tplace_holder",
+            "Błąd parsowania na lini:124\tZbyt wiele operandów\tplace_holder",
             parsing_error.to_string()
         );
 
         rust_i18n::set_locale("en");
 
         assert_eq!(
-            "Parsing error at line:123\tToo many operands\tplace_holder",
+            "Parsing error at line:124\tToo many operands\tplace_holder",
             parsing_error.to_string()
         );
     }
