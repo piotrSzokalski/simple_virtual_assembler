@@ -22,8 +22,10 @@ impl Connection {
         self.count += 1;
     }
     pub fn decrement(&mut self) {
-        self.count -= 1;
-        if self.count == 0 {
+        if self.count > 0 {
+            self.count -= 1;
+        }
+        else {
             self.drop = true
         }
     }

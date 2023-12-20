@@ -35,6 +35,7 @@ impl Port {
     pub fn connect(&mut self, connection: &mut Connection) {
         let (data, id) = connection.get();
         *self = Port::Connected( data, id);
+        connection.increment();
     }
 }
 
