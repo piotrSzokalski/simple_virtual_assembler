@@ -4,16 +4,28 @@ use std::sync::{Arc, Mutex};
 #[derive(Clone, Debug)]
 pub struct Connection {
     data: Arc<Mutex<i32>>,
+    id: usize,
+    count: usize,
+    drop: bool,
 }
 
 impl Connection {
 
-    pub fn new() -> Connection {
-        Connection { data: Arc::new(Mutex::new(0)) }
+    pub fn new(id: usize) -> Connection {
+        Connection { data: Arc::new(Mutex::new(0)), id, count: 0, drop: false }
     }
 
-    pub fn get(&mut self) -> Arc<Mutex<i32>> {
-        self.data.clone()
+    pub fn get(&mut self) -> (Arc<Mutex<i32>>, usize) {
+        (self.data.clone(), self.id)
+    }
+    pub fn increment(&mut self) {
+        self.count += 1;
+    }
+    pub fn decrement(&mut self) {
+        self.count -= 1;
+        if self.count == 0 {
+            self.drop = true
+        }
     }
 }
 
@@ -50,6 +62,9 @@ impl<'de> Deserialize<'de> for Connection {
 
                 Ok(Connection {
                     data: Arc::new(Mutex::new(inner_value)),
+                    id: todo!(),
+                    count: todo!(),
+                    drop: todo!(),
                 })
             }
         }

@@ -194,13 +194,21 @@ impl VirtualMachine {
         self.p[index].connect(connection);
     }
     /// Disconnects from connection
-    pub fn disconnect(&mut self, index: usize) {
+    pub fn disconnect(&mut self, index: usize) -> usize {
+        let mut disconnected_id = usize::MAX;
+        
         let value = match &self.p[index] {
-            Port::Connected(_) => self.p[index].get(),
+            Port::Connected(_, id) => {
+                disconnected_id = *id;
+                self.p[index].get_data()
+            }
             Port::Disconnected(value) => *value,
         };
+        
         self.p[index] = Port::Disconnected(value);
+        disconnected_id
     }
+    
 
     //________________________________________________--
 
@@ -224,7 +232,7 @@ impl VirtualMachine {
             }
             //(Operand::IntegerValue(value), Operand::PortRegister(index)) => self.p[index] = value,
             (Operand::IntegerValue(value), Operand::PortRegister(index)) => {
-                self.p[index].set(value)
+                self.p[index].set_data(value)
             }
             (Operand::IntegerValue(value), Operand::ACC) => self.acc = value,
             (Operand::IntegerValue(value), Operand::PC) => self.pc = value as usize,
@@ -237,7 +245,7 @@ impl VirtualMachine {
             //     self.p[index2] = self.r[index]
             // }
             (Operand::GeneralRegister(index), Operand::PortRegister(index2)) => {
-                self.p[index2].set(self.r[index])
+                self.p[index2].set_data(self.r[index])
             }
             (Operand::GeneralRegister(index), Operand::ACC) => self.acc = self.r[index],
             (Operand::GeneralRegister(index), Operand::PC) => self.pc = self.r[index] as usize,
@@ -247,32 +255,32 @@ impl VirtualMachine {
             //     self.r[index2] = self.p[index]
             // }
             (Operand::PortRegister(index), Operand::GeneralRegister(index2)) => {
-                self.r[index2] = self.p[index].get()
+                self.r[index2] = self.p[index].get_data()
             }
 
             // (Operand::PortRegister(index), Operand::PortRegister(index2)) => {
             //     self.p[index2] = self.p[index]
             // }
             (Operand::PortRegister(index), Operand::PortRegister(index2)) => {
-                let new_value = self.p[index].get();
-                self.p[index2].set(new_value);
+                let new_value = self.p[index].get_data();
+                self.p[index2].set_data(new_value);
             }
 
             //(Operand::PortRegister(index), Operand::ACC) => self.acc = self.p[index],
-            (Operand::PortRegister(index), Operand::ACC) => self.acc = self.p[index].get(),
+            (Operand::PortRegister(index), Operand::ACC) => self.acc = self.p[index].get_data(),
             //(Operand::PortRegister(index), Operand::PC) => self.pc = self.p[index] as usize,
-            (Operand::PortRegister(index), Operand::PC) => self.pc = self.p[index].get() as usize,
+            (Operand::PortRegister(index), Operand::PC) => self.pc = self.p[index].get_data() as usize,
             (Operand::ACC, Operand::IntegerValue(_)) => unreachable!(),
             (Operand::ACC, Operand::GeneralRegister(index)) => self.r[index] = self.acc,
             //(Operand::ACC, Operand::PortRegister(index)) => self.p[index] = self.acc,
-            (Operand::ACC, Operand::PortRegister(index)) => self.p[index].set(self.acc),
+            (Operand::ACC, Operand::PortRegister(index)) => self.p[index].set_data(self.acc),
             (Operand::ACC, Operand::ACC) => self.acc = self.acc,
             (Operand::ACC, Operand::PC) => self.pc = self.acc as usize,
 
             (Operand::PC, Operand::IntegerValue(_)) => unreachable!(),
             (Operand::PC, Operand::GeneralRegister(index)) => self.r[index] = self.pc as i32,
             //(Operand::PC, Operand::PortRegister(index)) => self.p[index] = self.pc as i32,
-            (Operand::PC, Operand::PortRegister(index)) => self.p[index].set(self.pc as i32),
+            (Operand::PC, Operand::PortRegister(index)) => self.p[index].set_data(self.pc as i32),
             (Operand::PC, Operand::ACC) => self.acc = self.pc as i32,
             (Operand::PC, Operand::PC) => self.pc = self.pc,
 
@@ -302,7 +310,7 @@ impl VirtualMachine {
             }
             Operand::GeneralRegister(index) => self.acc = operation(self.acc, self.r[index]),
             //Operand::PortRegister(index) => self.acc = operation(self.acc, self.p[index]),
-            Operand::PortRegister(index) => self.acc = operation(self.acc, self.p[index].get()),
+            Operand::PortRegister(index) => self.acc = operation(self.acc, self.p[index].get_data()),
             Operand::ACC => self.acc = operation(self.acc, self.acc),
             Operand::PC => self.acc = operation(self.acc, self.pc as i32),
         }
@@ -333,7 +341,7 @@ impl VirtualMachine {
             Operand::IntegerValue(value) => value,
             Operand::GeneralRegister(index) => self.r[index],
             //Operand::PortRegister(index) => self.p[index],
-            Operand::PortRegister(index) => self.p[index].get(),
+            Operand::PortRegister(index) => self.p[index].get_data(),
             Operand::ACC => self.acc,
             Operand::PC => self.pc as i32,
         };
@@ -342,7 +350,7 @@ impl VirtualMachine {
             Operand::IntegerValue(value) => value,
             Operand::GeneralRegister(index) => self.r[index],
             //Operand::PortRegister(index) => self.p[index],
-            Operand::PortRegister(index) => self.p[index].get(),
+            Operand::PortRegister(index) => self.p[index].get_data(),
             Operand::ACC => self.acc,
             Operand::PC => self.pc as i32,
         };

@@ -23,7 +23,7 @@ use simple_virtual_assembler::{
 // So far seems to be working
 #[test]
 fn test_basic_connection_between_vms() {
-    let mut connection_to_vm2 = Connection::new();
+    let mut connection_to_vm2 = Connection::new(1);
     let mut connection_to_vm1 = connection_to_vm2.clone();
     let mut connection_to_vm2 = connection_to_vm2.clone();
 
@@ -110,11 +110,11 @@ fn test_basic_communication_between_vms() {
     "#;
 
     // Connection to indicate if value is ready to be read
-    let communication_connection = Connection::new();
+    let communication_connection = Connection::new(1);
     let mut communication_connection_vm1 = communication_connection.clone();
     let mut communication_connection_vm2 = communication_connection.clone();
     // Connection for sending data
-    let data_connection = Connection::new();
+    let data_connection = Connection::new(2);
     let mut data_connection_vm1 = data_connection.clone();
     let mut data_connection_vm2 = data_connection.clone();
 
@@ -275,8 +275,8 @@ fn test_basic_communication_between_vms_with_simpler_api() {
     let (vm2, vm2_copy) = VirtualMachine::new_shared_with_program(program2);
 
     // creating connections
-    let communication_connection = Connection::new();
-    let data_connection = Connection::new();
+    let communication_connection = Connection::new(1);
+    let data_connection = Connection::new(2);
 
     let mut communication_coon_to_vm1 = communication_connection.clone();
     let mut communication_coon_to_vm2 = communication_connection.clone();
