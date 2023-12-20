@@ -27,6 +27,12 @@ impl Connection {
             self.drop = true
         }
     }
+    pub fn get_id(&mut self) -> usize {
+        self.id
+    }
+    pub fn get_drop(&mut self) -> bool{
+        self.drop
+    }
 }
 
 impl Serialize for Connection {
