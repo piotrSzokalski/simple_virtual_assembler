@@ -6,7 +6,7 @@ pub struct Connection {
     data: Arc<Mutex<i32>>,
     id: usize,
     count: usize,
-    drop: bool,
+    pub drop: bool,
 }
 
 impl Connection {
