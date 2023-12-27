@@ -25,7 +25,7 @@ impl Port {
         }
     }
 
-    pub fn set(&mut self, new_value: i32) {
+    pub fn set_value(&mut self, new_value: i32) {
         match self {
             Port::Connected(value) => *value.lock().unwrap() = new_value,
             Port::Disconnected(value) => *value = new_value,
@@ -34,6 +34,25 @@ impl Port {
 
     pub fn connect(&mut self, connection: &mut Connection) {
         *self = Port::Connected(connection.get());
+    }
+
+    pub fn connect_port(&mut self, port: &mut Port) {
+        match (self.clone(), port.clone()) {
+            (Port::Connected(v1), Port::Connected(v2)) => *self = Port::Connected(v2.clone()),
+            (Port::Connected(v1), Port::Disconnected(v2)) => port.set_to_shared(v1.clone()),
+            (Port::Disconnected(v1), Port::Connected(v2)) => *self = Port::Connected(v2.clone()),
+            (Port::Disconnected(v1), Port::Disconnected(v2)) => {
+                let shared = Arc::new(Mutex::new(v1));
+                *self = Port::Connected(shared.clone());
+                port.set_to_shared(shared.clone());
+            }
+        }
+    }
+
+
+
+    pub fn set_to_shared(&mut self, shared_data: Arc<Mutex<i32>>) {
+        *self = Port::Connected(shared_data)
     }
 }
 
