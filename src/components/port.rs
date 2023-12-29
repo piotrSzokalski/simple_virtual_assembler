@@ -8,7 +8,7 @@ use std::{sync::{Arc, Mutex}, path::Display, fmt::{self, write}};
 use super::connection::{self, Connection};
 
 /// Port used for communication between vm and other components
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub enum Port {
     Connected(Arc<Mutex<i32>>),
     Disconnected(i32),
@@ -55,6 +55,58 @@ impl Port {
         *self = Port::Connected(shared_data)
     }
 }
+
+
+impl Serialize for Port {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            Port::Connected(inner) => {
+                let guard = inner.lock().expect("Mutex lock failed");
+                guard.serialize(serializer)
+            }
+            Port::Disconnected(value) => value.serialize(serializer),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Port {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct PortVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for PortVisitor {
+            type Value = Port;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("an integer or a connected Arc<Mutex<i32>>")
+            }
+
+            fn visit_i32<E>(self, value: i32) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(Port::Disconnected(value))
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::SeqAccess<'de>,
+            {
+                let value = seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+                Ok(Port::Connected(Arc::new(Mutex::new(value))))
+            }
+        }
+
+        deserializer.deserialize_any(PortVisitor)
+    }
+}
+
 
 // impl Serialize for Port {
 //     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
