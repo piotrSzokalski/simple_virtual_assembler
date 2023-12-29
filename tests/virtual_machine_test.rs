@@ -2,6 +2,7 @@
 
 extern crate simple_virtual_assembler;
 
+use serde::de::value;
 use simple_virtual_assembler::assembler::assembler::Assembler;
 use simple_virtual_assembler::assembler::parsing_err::ParsingError;
 use simple_virtual_assembler::vm::virtual_machine;
@@ -103,6 +104,33 @@ fn assembling_and_running_division_by_subtracting() {
     match result {
         Ok(vm) => println!("{}", vm),
         Err(e) => println!("{:?}", e),
+    }
+}
+
+#[test]
+fn test_vm_serialization() {
+    let program = r#"
+        MOV 20 r0
+        MOV 5 r1
+        MOV 0 r2
+        loop:
+            MOV r0 acc
+            SUB r1
+            MOV acc r0
+            MOV r2 acc
+            ADD 1
+            MOV acc r2
+            CMP r0 0
+            JG loop
+        HLT
+        "#;
+    let result = assembler_and_run(program);
+
+    let json = serde_json::to_string_pretty(&result.unwrap());
+
+    match json {
+        Ok(value) => println!("{}", value),
+        Err(err) => println!("{}", err),
     }
 }
 

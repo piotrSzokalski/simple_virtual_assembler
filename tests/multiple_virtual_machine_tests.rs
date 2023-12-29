@@ -219,26 +219,8 @@ fn test_vm_start_delayed() {
 
 #[test]
 fn test_basic_communication_between_vms_with_simpler_api() {
-    // tests communion between vms
-    //
-    // vm1 p0 is connected to vm2 p0
-    // vm1 p1 is connected to vm p1
-    //
-    // vm1 computes some value that vm2 requires to do its work
-    // vm1 uses p0 of its ports to inform vm2 weather the value is ready
-    // vm1 uses p1 to send data
-    //
-    // vm2 awaits for ready signal from vm1 by comparing p0 to some value in an infinite loop
-    // when vm1 produces value  vm2 exits infinite loop and proceeds to use that value
-    //
-    // for this test value 7 will used to indicate that vm1 has produced value
-    //
-    // at the time of wiring this test instruction to jump to label regardless of flag state
-    // is not present, therefore code might be a bit cluny
-    //
-    // for this test vm1 counts to 200 to simulate some computation
-    // vm2 awaits it and divides it by 2
-    //
+    // tests communion between vms with simpler api
+   
     let vm1_code = r#"
     sum:                #   label used to denote block of code responsible for producing input to vm2 
         MOV 0 p0        #   inform vm2 that value is not ready
@@ -320,26 +302,8 @@ fn test_basic_communication_between_vms_with_simpler_api() {
 
 #[test]
 fn test_connecting_port_to_port() {
-    // tests communion between vms
-    //
-    // vm1 p0 is connected to vm2 p0
-    // vm1 p1 is connected to vm p1
-    //
-    // vm1 computes some value that vm2 requires to do its work
-    // vm1 uses p0 of its ports to inform vm2 weather the value is ready
-    // vm1 uses p1 to send data
-    //
-    // vm2 awaits for ready signal from vm1 by comparing p0 to some value in an infinite loop
-    // when vm1 produces value  vm2 exits infinite loop and proceeds to use that value
-    //
-    // for this test value 7 will used to indicate that vm1 has produced value
-    //
-    // at the time of wiring this test instruction to jump to label regardless of flag state
-    // is not present, therefore code might be a bit cluny
-    //
-    // for this test vm1 counts to 200 to simulate some computation
-    // vm2 awaits it and divides it by 2
-    //
+    // tests communion between vms using ports
+    
     let vm1_code = r#"
     sum:                #   label used to denote block of code responsible for producing input to vm2 
         MOV 0 p0        #   inform vm2 that value is not ready

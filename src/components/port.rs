@@ -3,12 +3,12 @@ use serde::{
     ser::SerializeTupleVariant,
     Deserialize, Deserializer, Serialize, Serializer,
 };
-use std::sync::{Arc, Mutex};
+use std::{sync::{Arc, Mutex}, path::Display, fmt::{self, write}};
 
 use super::connection::{self, Connection};
 
 /// Port used for communication between vm and other components
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Port {
     Connected(Arc<Mutex<i32>>),
     Disconnected(i32),
@@ -56,24 +56,31 @@ impl Port {
     }
 }
 
+// impl Serialize for Port {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: Serializer,
+//     {
+//         match self {
+//             Port::Connected(connected) => {
+//                 let connected_value = connected.lock().unwrap(); // You may want to handle the lock result more gracefully
+//                 serializer.serialize_newtype_variant("Port", 0, "Connected", &connected_value.clone())
+//             }
+//             Port::Disconnected(disconnected) => {
+//                 serializer.serialize_newtype_variant("Port", 1, "Disconnected", disconnected)
+//             }
+//         }
+//     }
+// }
 //TODO:
-impl Serialize for Port {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        todo!()
-    }
-}
-//TODO:
-impl<'de> Deserialize<'de> for Port {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        todo!()
-    }
-}
+// impl<'de> Deserialize<'de> for Port {
+//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+//     where
+//         D: Deserializer<'de>,
+//     {
+//         todo!()
+//     }
+// }
 
 //FIXME:
 impl PartialEq for Port {
@@ -83,5 +90,38 @@ impl PartialEq for Port {
             (Self::Disconnected(l0), Self::Disconnected(r0)) => false,
             _ => false,
         }
+    }
+}
+
+// impl fmt::Display for Port {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         match self {
+//             Port::Connected(value) => write!(f, "{}", value.lock().unwrap()),
+//             Port::Disconnected(value) => write!(f, "{}", value.lock().unwrap()),
+//         }
+        
+//     }
+// }
+
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_serialization() {
+        let mut port1 = Port::new(0);
+        let mut port2 = Port::new(1);
+
+        port1.connect_port(&mut port2);
+        port2.set_value(12);
+
+        let x = serde_json::to_string_pretty(&port1);
+
+        print!("{:?}", x.unwrap());
+    }
+
+
+    #[derive(Serialize)]
+    struct mu {
+        x: Arc<i32>
     }
 }
