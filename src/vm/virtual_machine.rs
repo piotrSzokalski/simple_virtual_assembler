@@ -193,6 +193,20 @@ impl VirtualMachine {
     pub fn connect(&mut self, index: usize, connection: &mut Connection) {
         self.p[index].connect(connection);
     }
+
+    /// Connects vm with connection to shared data across threads with id of port
+    ///
+    /// ### Arguments
+    ///
+    /// * index - index of port
+    /// * connection - reference to connection
+    /// * id of port
+    ///
+    pub fn connect_with_id(&mut self, index: usize, connection: &mut Connection, id: String) {
+        self.p[index].connect(connection);
+        connection.add_port_id(id);
+    }
+
     /// Disconnects from connection
     pub fn disconnect(&mut self, index: usize) {
         let value = match &self.p[index] {

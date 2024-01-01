@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 
 # For serializon 
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1", features = ["derive", "rc"] }
 
 # For localization 
 rust-i18n = "2"
