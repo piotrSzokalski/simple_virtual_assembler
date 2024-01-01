@@ -1,7 +1,7 @@
 use serde::{de::SeqAccess, de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::sync::{Arc, Mutex};
 /// Shared data used to connect vms, analogs to a wire connecting them
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Connection {
     data: Arc<Mutex<i32>>,
     /// optional, helper for ui app
@@ -77,14 +77,5 @@ impl Connection {
 mod test {
     use super::*;
 
-    #[test]
-    fn test() {
-        let a = String::from("test");
-        let b = String::from("tese");
 
-        let c = &a;
-        let d = &b;
-
-        assert!(c == d);
-    }
 }

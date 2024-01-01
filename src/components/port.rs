@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex};
 use super::connection::{self, Connection};
 
 /// Port used for communication between vm and other components
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Port {
     Connected(Arc<Mutex<i32>>),
     Disconnected(i32),
@@ -38,23 +38,23 @@ impl Port {
 }
 
 //TODO:
-impl Serialize for Port {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        todo!()
-    }
-}
+// impl Serialize for Port {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: Serializer,
+//     {
+//         todo!()
+//     }
+// }
 //TODO:
-impl<'de> Deserialize<'de> for Port {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        todo!()
-    }
-}
+// impl<'de> Deserialize<'de> for Port {
+//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+//     where
+//         D: Deserializer<'de>,
+//     {
+//         todo!()
+//     }
+// }
 
 //FIXME:
 impl PartialEq for Port {
