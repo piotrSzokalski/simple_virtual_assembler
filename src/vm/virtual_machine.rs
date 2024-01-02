@@ -167,6 +167,15 @@ impl VirtualMachine {
         )
     }
 
+    pub fn get_state_for_display(&self) -> (i32, usize, Flag, [i32; 4], [i32; 4], VmStatus, u32) {
+        let mut port_values: [i32; 4];
+        for (i, p) in self.p.iter().enumerate() {
+            port_values[i] = p.get();
+        }
+
+        (self.acc, self.pc, self.flag, self.r, port_values, self.status, self.delay_ms)
+    }
+
     pub fn set_pc(&mut self, pc: usize) {
         self.pc = pc;
     }
