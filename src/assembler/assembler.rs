@@ -176,6 +176,7 @@ impl Assembler {
             .lines()
             .enumerate()
             .filter(|(_, line)| !line.trim().is_empty())
+            .filter(|(_, line)| !line.trim().starts_with("#"))
             .map(|(current_line_number, line)| self.parse_instruction(line, current_line_number))
             .collect();
 
@@ -663,6 +664,45 @@ mod test {
             cmp acc 20  # Comparing value in accumulator to 20
             jl loop     # Jumping to 'loop' label if accumulator is lesser
         hlt             # Stopping execution
+        "#;
+
+        let mut assembler = Assembler::new();
+
+        let result = assembler.parse(program_text);
+        assert!(result.is_ok());
+        println!("________________________________________________---");
+        match result {
+            Ok(v) => println!("{:?}", v),
+            Err(e) => println!("{:?}", e),
+        }
+    }
+
+
+    #[test]
+    fn test_line_with_only_comment() {
+        let program_text = r#"
+        #   This program does some stuff
+        #
+        #       *___________________*
+        #       |                   |
+        #       |                   |
+        #       |                   |
+        #       *___________________*
+        #
+
+        mov 10 acc      # Moving 10 to accumulator
+
+        # Looping
+
+        loop:           # Setting up label
+            add 8       # Adding 8 to accumulator
+            cmp acc 20  # Comparing value in accumulator to 20
+            jl loop     # Jumping to 'loop' label if accumulator is lesser
+        hlt             # Stopping execution
+
+        #
+        #   Something Something Something
+        #
         "#;
 
         let mut assembler = Assembler::new();
