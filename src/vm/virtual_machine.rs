@@ -168,9 +168,9 @@ impl VirtualMachine {
     }
 
     pub fn get_state_for_display(&self) -> (i32, usize, Flag, [i32; 4], [i32; 4], VmStatus, u32) {
-        let mut port_values: [i32; 4];
+        let mut port_values: [i32; 4] = [0,0,0,0];
         for (i, p) in self.p.iter().enumerate() {
-            port_values[i] = p.get();
+            port_values[i] = p.clone().get();
         }
 
         (self.acc, self.pc, self.flag, self.r, port_values, self.status, self.delay_ms)
