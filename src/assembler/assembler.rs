@@ -222,7 +222,7 @@ impl Assembler {
                     operands,
                     current_line_number,
                     (false, false),
-                ), //TODO:
+                ),
 
                 "JE" | "je" => self.parse_jump(Opcode::JE, operands, current_line_number),
                 "JL" | "jl" => self.parse_jump(Opcode::JL, operands, current_line_number),
@@ -232,11 +232,7 @@ impl Assembler {
                 "HLT" | "hlt" => Ok(Instruction::new(Opcode::HLT)),
                 "NOP" | "nop" => Ok(Instruction::new(Opcode::NOP)),
                 
-                "SLP" | "slp" => Err(ParsingError::new(
-                    ParsingError::NotImplanted,
-                    current_line_number,
-                    "".to_string(),
-                )),
+                "SLP" | "slp" => self.parse_unary_instruction(Opcode::SLP, operands, current_line_number),
                 label if label.ends_with(':') => self.parse_label(label, current_line_number),
                 _ => Err(ParsingError::new(
                     ParsingError::Unknown,

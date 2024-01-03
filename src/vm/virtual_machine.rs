@@ -233,9 +233,17 @@ impl VirtualMachine {
 
     //________________________________________________--
 
-    //TODO:
-    fn sleep(&mut self, duration: Operand) {
-        thread::sleep(Duration::from_secs(2));
+    
+    fn sleep(&mut self, operand: Operand) {
+        let duration =  match operand {
+            Operand::IntegerValue(value) => value,
+            Operand::GeneralRegister(index) => self.r[index],
+            Operand::PortRegister(index) => self.p[index].get(),
+            Operand::ACC => self.acc,
+            Operand::PC => self.pc.try_into().unwrap_or(0),
+        };
+
+        thread::sleep(Duration::from_secs(duration.try_into().unwrap_or(0)));
     }
 
     /// Copies operand into register
