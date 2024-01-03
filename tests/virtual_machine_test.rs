@@ -19,6 +19,30 @@ fn assembler_and_run(program_text: &str) -> Result<VirtualMachine, ParsingError>
     Ok(vm)
 }
 
+/// Parses and runs program on vm, displays vm state between each instruction
+fn assembler_and_with_prints(program_text: &str) -> Result<VirtualMachine, ParsingError> {
+    let program = Assembler::new().parse(program_text)?;
+
+    let mut vm =
+        simple_virtual_assembler::vm::virtual_machine::VirtualMachine::new_with_program(program);
+
+    vm.set_delay(500);
+
+    let mut running = true;
+    let mut counter = 0;
+
+
+    while running {
+        println!("__________________________{}__________________________", counter);
+        println!("{}", vm);
+        println!("______________________________________________________");
+        running = vm.execute();
+        counter += 1;
+    }
+
+    Ok(vm)
+}
+
 #[test]
 fn assembling_and_running_simple_program1() {
     let program_text = r#"
@@ -105,6 +129,7 @@ fn assembling_and_running_division_by_subtracting() {
     }
 }
 
+//TODO:
 #[test]
 fn test_panicking_code() {
     //     let program = r#"
@@ -126,25 +151,27 @@ fn test_panicking_code() {
     //     Err(e) => println!("{:?}", e),
     // }
 }
+//TODO:
+//#[test]
+// fn test_jmp_without_condition() {
+//     let program = r#"
+//     mov 0 p0
+//     procedure:
+// 	    add 2
+// 	    cmp acc 10
+// 	    je sen
+// 	    jmp procedure
+//         sen:
+// 	mov acc p0
+// 	    hlt
+//     "#;
 
-#[test]
-fn test_jmp_without_condition() {
-    let program = r#"
-    procedure:
-        add 2
-        cmp acc 10
-        je send
-        jmp procedure
-    send:
-        mov acc p0
-    "#;
-
-    //let result = assembler_and_run(program);
-    let mut assembler = Assembler::new();
-    let p = assembler.parse(program);
-    println!("{:?}",p);
-    // match result {
-    //     Ok(vm) => println!("{}", vm),
-    //     Err(e) => println!("{:?}", e),
-    // }
-}
+//     let result = assembler_and_with_prints(program);
+//     //let mut assembler = Assembler::new();
+//     //let p = assembler.parse(program);
+//     //println!("{:?}",p);
+//     match result {
+//         Ok(vm) => println!("{}", vm),
+//         Err(e) => println!("{:?}", e),
+//     }
+// }

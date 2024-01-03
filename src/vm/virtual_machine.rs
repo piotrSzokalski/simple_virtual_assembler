@@ -168,12 +168,20 @@ impl VirtualMachine {
     }
 
     pub fn get_state_for_display(&self) -> (i32, usize, Flag, [i32; 4], [i32; 4], VmStatus, u32) {
-        let mut port_values: [i32; 4] = [0,0,0,0];
+        let mut port_values: [i32; 4] = [0, 0, 0, 0];
         for (i, p) in self.p.iter().enumerate() {
             port_values[i] = p.clone().get();
         }
 
-        (self.acc, self.pc, self.flag, self.r, port_values, self.status, self.delay_ms)
+        (
+            self.acc,
+            self.pc,
+            self.flag,
+            self.r,
+            port_values,
+            self.status,
+            self.delay_ms,
+        )
     }
 
     pub fn set_pc(&mut self, pc: usize) {
@@ -189,8 +197,6 @@ impl VirtualMachine {
         self.acc = 0;
         self.flag = Flag::EQUAL;
         self.r.iter_mut().for_each(|item| *item = 0);
-        //TODO: (maybe)
-        //self.p.iter_mut().for_each(|item| *item = 0);
     }
     /// Connects vm with connection to shared data across threads
     ///
@@ -245,7 +251,7 @@ impl VirtualMachine {
             (Operand::IntegerValue(value), Operand::GeneralRegister(index)) => {
                 self.r[index] = value
             }
-            //(Operand::IntegerValue(value), Operand::PortRegister(index)) => self.p[index] = value,
+
             (Operand::IntegerValue(value), Operand::PortRegister(index)) => {
                 self.p[index].set(value)
             }
@@ -256,9 +262,7 @@ impl VirtualMachine {
             (Operand::GeneralRegister(index), Operand::GeneralRegister(index2)) => {
                 self.r[index2] = self.r[index]
             }
-            // (Operand::GeneralRegister(index), Operand::PortRegister(index2)) => {
-            //     self.p[index2] = self.r[index]
-            // }
+
             (Operand::GeneralRegister(index), Operand::PortRegister(index2)) => {
                 self.p[index2].set(self.r[index])
             }
@@ -266,35 +270,29 @@ impl VirtualMachine {
             (Operand::GeneralRegister(index), Operand::PC) => self.pc = self.r[index] as usize,
 
             (Operand::PortRegister(_), Operand::IntegerValue(_)) => unreachable!(),
-            // (Operand::PortRegister(index), Operand::GeneralRegister(index2)) => {
-            //     self.r[index2] = self.p[index]
-            // }
+
             (Operand::PortRegister(index), Operand::GeneralRegister(index2)) => {
                 self.r[index2] = self.p[index].get()
             }
 
-            // (Operand::PortRegister(index), Operand::PortRegister(index2)) => {
-            //     self.p[index2] = self.p[index]
-            // }
             (Operand::PortRegister(index), Operand::PortRegister(index2)) => {
                 let new_value = self.p[index].get();
                 self.p[index2].set(new_value);
             }
 
-            //(Operand::PortRegister(index), Operand::ACC) => self.acc = self.p[index],
             (Operand::PortRegister(index), Operand::ACC) => self.acc = self.p[index].get(),
-            //(Operand::PortRegister(index), Operand::PC) => self.pc = self.p[index] as usize,
+
             (Operand::PortRegister(index), Operand::PC) => self.pc = self.p[index].get() as usize,
             (Operand::ACC, Operand::IntegerValue(_)) => unreachable!(),
             (Operand::ACC, Operand::GeneralRegister(index)) => self.r[index] = self.acc,
-            //(Operand::ACC, Operand::PortRegister(index)) => self.p[index] = self.acc,
+
             (Operand::ACC, Operand::PortRegister(index)) => self.p[index].set(self.acc),
             (Operand::ACC, Operand::ACC) => self.acc = self.acc,
             (Operand::ACC, Operand::PC) => self.pc = self.acc as usize,
 
             (Operand::PC, Operand::IntegerValue(_)) => unreachable!(),
             (Operand::PC, Operand::GeneralRegister(index)) => self.r[index] = self.pc as i32,
-            //(Operand::PC, Operand::PortRegister(index)) => self.p[index] = self.pc as i32,
+
             (Operand::PC, Operand::PortRegister(index)) => self.p[index].set(self.pc as i32),
             (Operand::PC, Operand::ACC) => self.acc = self.pc as i32,
             (Operand::PC, Operand::PC) => self.pc = self.pc,
@@ -324,7 +322,7 @@ impl VirtualMachine {
                 self.acc = operation(self.acc, value);
             }
             Operand::GeneralRegister(index) => self.acc = operation(self.acc, self.r[index]),
-            //Operand::PortRegister(index) => self.acc = operation(self.acc, self.p[index]),
+
             Operand::PortRegister(index) => self.acc = operation(self.acc, self.p[index].get()),
             Operand::ACC => self.acc = operation(self.acc, self.acc),
             Operand::PC => self.acc = operation(self.acc, self.pc as i32),
@@ -356,7 +354,7 @@ impl VirtualMachine {
         let value1 = match operand1 {
             Operand::IntegerValue(value) => value,
             Operand::GeneralRegister(index) => self.r[index],
-            //Operand::PortRegister(index) => self.p[index],
+
             Operand::PortRegister(index) => self.p[index].get(),
             Operand::ACC => self.acc,
             Operand::PC => self.pc as i32,
@@ -365,7 +363,7 @@ impl VirtualMachine {
         let value2 = match operand2 {
             Operand::IntegerValue(value) => value,
             Operand::GeneralRegister(index) => self.r[index],
-            //Operand::PortRegister(index) => self.p[index],
+
             Operand::PortRegister(index) => self.p[index].get(),
             Operand::ACC => self.acc,
             Operand::PC => self.pc as i32,
@@ -414,8 +412,6 @@ impl VirtualMachine {
                 Opcode::JE(name) => self.jump_to_label(&name, JMPCondition::EQ),
                 Opcode::JL(name) => self.jump_to_label(&name, JMPCondition::LST),
                 Opcode::JG(name) => self.jump_to_label(&name, JMPCondition::GRT),
-
-                // ?
                 Opcode::JMP(name) => self.jump_to_label(&name, JMPCondition::NONE),
             },
             Instruction::Label(name) => self.add_label(name),
@@ -437,7 +433,6 @@ impl VirtualMachine {
         self.status = VmStatus::Running;
         while running {
             running = self.execute();
-            //self.delay(self.delay_ms);
             VirtualMachine::delay(self.delay_ms)
         }
         self.status = VmStatus::Finished;
@@ -459,9 +454,6 @@ impl VirtualMachine {
                         running = vm.execute();
 
                         delay = vm.get_delay();
-
-                        //let delay = vm.get_delay();
-                        //println!("Test");
 
                         //FIXME:
                         // causes deadlock
@@ -496,7 +488,7 @@ impl VirtualMachine {
 
     /// Helper function to create shared vm
     ///
-    /// # Examples
+    /// ### Examples
     ///
     /// ```rs
     /// let (vm2, vm2_copy) = VirtualMachine::new_shared_with_program(program2);
