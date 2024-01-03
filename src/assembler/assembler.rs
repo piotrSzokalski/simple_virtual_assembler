@@ -211,11 +211,10 @@ impl Assembler {
                 "XOR" | "xor" => {
                     self.parse_unary_instruction(Opcode::XOR, operands, current_line_number)
                 }
-                "NOT" | "not" => Err(ParsingError::new(
-                    ParsingError::NotImplanted,
-                    current_line_number,
-                    "".to_string(),
-                )),
+                "NOT" | "not" => Ok(Instruction::new(Opcode::NOT)),
+
+                "SHL" | "shl" => self.parse_unary_instruction(Opcode::SHL, operands, current_line_number),
+                "SHR" | "shr" => self.parse_unary_instruction(Opcode::SHR, operands, current_line_number),
 
                 "CMP" | "cmp" => self.parse_binary_instruction(
                     Opcode::CMP,

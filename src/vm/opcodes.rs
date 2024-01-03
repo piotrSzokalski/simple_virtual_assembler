@@ -6,7 +6,7 @@ pub enum JMPCondition {
     EQ,
     LST,
     GRT,
-    NONE
+    NONE,
 }
 
 /// Opcodes used by SVA
@@ -15,10 +15,14 @@ pub enum JMPCondition {
 pub enum Opcode {
     /// Do nothing
     NOP,
+    /// Halt execution
+    HLT,
+    /// Sleeps vm for given amount of milliseconds
+    SLP(Operand),
+
     /// Copy value of first argument ot second
     MOV(Operand, Operand),
     /// Sleep
-    SLP(Operand),
     // Add operand to acc
     ADD(Operand),
     /// Subtract operand from acc
@@ -29,14 +33,20 @@ pub enum Opcode {
     DIV(Operand),
     /// Modulus acc by operand
     MOD(Operand),
-    /// AND operand to acc
+
+    /// ANDx operand with  acc
     AND(Operand),
-    /// OR operand to acc
+    /// ORx operand with acc
     OR(Operand),
-    /// XOR operand to acc
+    /// XORx operand with acc
     XOR(Operand),
-    /// NOT acc
+    /// NOTs acc
     NOT,
+    /// Shifts bits to left
+    SHL(Operand),
+    /// Shifts bits to right
+    SHR(Operand),
+
     /// Compare
     CMP(Operand, Operand),
     /// Jum to label
@@ -47,8 +57,6 @@ pub enum Opcode {
     JL(String),
     /// Jump to label if greater
     JG(String),
-    /// Halt execution
-    HLT,
 }
 
 // instrukcje podstawowe

@@ -19,6 +19,8 @@ use crate::vm::{
     operand::Operand,
 };
 
+use super::operand;
+
 /// Status of vm
 #[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq, Clone, Copy)]
 pub enum VmStatus {
@@ -242,8 +244,9 @@ impl VirtualMachine {
             Operand::ACC => self.acc,
             Operand::PC => self.pc.try_into().unwrap_or(0),
         };
-
-        thread::sleep(Duration::from_secs(duration.try_into().unwrap_or(0)));
+        VirtualMachine::delay(self.delay_ms)
+        
+        //thread::sleep(Duration::from_millis(duration.try_into().unwrap_or(0)));
     }
 
     /// Copies operand into register
@@ -421,6 +424,8 @@ impl VirtualMachine {
                 Opcode::JL(name) => self.jump_to_label(&name, JMPCondition::LST),
                 Opcode::JG(name) => self.jump_to_label(&name, JMPCondition::GRT),
                 Opcode::JMP(name) => self.jump_to_label(&name, JMPCondition::NONE),
+                Opcode::SHL(operand) => self.apply_operation(operand, |a, b| a << b),
+                Opcode::SHR(operand) => self.apply_operation(operand, |a, b| a >> b),
             },
             Instruction::Label(name) => self.add_label(name),
         }
