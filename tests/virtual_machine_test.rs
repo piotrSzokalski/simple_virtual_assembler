@@ -1,21 +1,19 @@
-
-
 extern crate simple_virtual_assembler;
 
+use simple_virtual_assembler::assembler;
 use simple_virtual_assembler::assembler::assembler::Assembler;
 use simple_virtual_assembler::assembler::parsing_err::ParsingError;
-use simple_virtual_assembler::vm::virtual_machine;
-use simple_virtual_assembler::vm::opcodes;
 use simple_virtual_assembler::vm;
-use simple_virtual_assembler::assembler;
+use simple_virtual_assembler::vm::opcodes;
+use simple_virtual_assembler::vm::virtual_machine;
 use simple_virtual_assembler::vm::virtual_machine::VirtualMachine;
-
 
 /// Parses and runs program on vm
 fn assembler_and_run(program_text: &str) -> Result<VirtualMachine, ParsingError> {
     let program = Assembler::new().parse(program_text)?;
 
-    let mut vm = simple_virtual_assembler::vm::virtual_machine::VirtualMachine::new_with_program(program);
+    let mut vm =
+        simple_virtual_assembler::vm::virtual_machine::VirtualMachine::new_with_program(program);
     vm.run();
 
     Ok(vm)
@@ -104,6 +102,28 @@ fn assembling_and_running_division_by_subtracting() {
         Ok(vm) => println!("{}", vm),
         Err(e) => println!("{:?}", e),
     }
+
 }
 
+    #[test]
+fn test_panicking_code() {
+    //     let program = r#"
+    //     loop:
+    //         add 1
+    //         mul 2
+    //         mov acc r0
+    //         add 1
+    //         mul 3
+    //         mov acc r1
+    //         je loop
+        
+    //     "#;
+    
 
+    // let result = assembler_and_run(program);
+
+    // match result {
+    //     Ok(vm) => println!("{}", vm),
+    //     Err(e) => println!("{:?}", e),
+    // }
+}
