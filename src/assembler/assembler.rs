@@ -230,12 +230,9 @@ impl Assembler {
                 "JMP" | "jmp" => self.parse_jump(Opcode::JMP, operands, current_line_number),
 
                 "HLT" | "hlt" => Ok(Instruction::new(Opcode::HLT)),
-                "NOP" | "nop" => Err(ParsingError::new(
-                    ParsingError::NotImplanted,
-                    current_line_number,
-                    "".to_string(),
-                )),
-                "SPL" | "spl" => Err(ParsingError::new(
+                "NOP" | "nop" => Ok(Instruction::new(Opcode::NOP)),
+                
+                "SLP" | "slp" => Err(ParsingError::new(
                     ParsingError::NotImplanted,
                     current_line_number,
                     "".to_string(),
