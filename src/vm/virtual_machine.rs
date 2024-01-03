@@ -345,6 +345,7 @@ impl VirtualMachine {
                 (Flag::EQUAL, JMPCondition::EQ) => self.pc = jmp_to,
                 (Flag::GREATER, JMPCondition::GRT) => self.pc = jmp_to,
                 (Flag::LESSER, JMPCondition::LST) => self.pc = jmp_to,
+                (_, JMPCondition::NONE) => self.pc = jmp_to,
                 _ => {}
             }
         }
@@ -415,7 +416,7 @@ impl VirtualMachine {
                 Opcode::JG(name) => self.jump_to_label(&name, JMPCondition::GRT),
 
                 // ?
-                Opcode::JMP(name, condition) => self.jump_to_label(&name, condition),
+                Opcode::JMP(name) => self.jump_to_label(&name, JMPCondition::NONE),
             },
             Instruction::Label(name) => self.add_label(name),
         }

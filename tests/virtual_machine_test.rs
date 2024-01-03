@@ -57,6 +57,7 @@ fn assembling_and_running_invalid_code_by_subtracting() {
         JL loop
     HLT
     "#;
+
     let result = assembler_and_run(program);
 
     assert!(result.is_err());
@@ -102,10 +103,9 @@ fn assembling_and_running_division_by_subtracting() {
         Ok(vm) => println!("{}", vm),
         Err(e) => println!("{:?}", e),
     }
-
 }
 
-    #[test]
+#[test]
 fn test_panicking_code() {
     //     let program = r#"
     //     loop:
@@ -116,12 +116,33 @@ fn test_panicking_code() {
     //         mul 3
     //         mov acc r1
     //         je loop
-        
+
     //     "#;
-    
 
     // let result = assembler_and_run(program);
 
+    // match result {
+    //     Ok(vm) => println!("{}", vm),
+    //     Err(e) => println!("{:?}", e),
+    // }
+}
+
+#[test]
+fn test_jmp_without_condition() {
+    let program = r#"
+    procedure:
+        add 2
+        cmp acc 10
+        je send
+        jmp procedure
+    send:
+        mov acc p0
+    "#;
+
+    //let result = assembler_and_run(program);
+    let mut assembler = Assembler::new();
+    let p = assembler.parse(program);
+    println!("{:?}",p);
     // match result {
     //     Ok(vm) => println!("{}", vm),
     //     Err(e) => println!("{:?}", e),

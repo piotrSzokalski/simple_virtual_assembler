@@ -255,6 +255,7 @@ impl Assembler {
                 "JE" | "je" => self.parse_jump(Opcode::JE, operands, current_line_number),
                 "JL" | "jl" => self.parse_jump(Opcode::JL, operands, current_line_number),
                 "JG" | "jg" => self.parse_jump(Opcode::JG, operands, current_line_number),
+                "JMP" | "jmp" => self.parse_jump(Opcode::JMP, operands, current_line_number),
 
                 "HLT" | "hlt" => Ok(Instruction::new(Opcode::HLT)),
                 "NOP" | "nop" => Err(ParsingError::new(

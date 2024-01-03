@@ -6,6 +6,7 @@ pub enum JMPCondition {
     EQ,
     LST,
     GRT,
+    NONE
 }
 
 /// Opcodes used by SVA
@@ -39,7 +40,7 @@ pub enum Opcode {
     /// Compare
     CMP(Operand, Operand),
     /// Jum to label
-    JMP(String, JMPCondition),
+    JMP(String),
     /// Jump to label if equal
     JE(String),
     /// Jump to label if lesser
