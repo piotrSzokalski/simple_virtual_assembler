@@ -7,6 +7,8 @@ pub struct Connection {
     /// optional, helper for ui app
     /// ids of ports connected
     ports: Vec<String>,
+    /// Optional id of port
+    id: Option<usize>,
 }
 
 impl Connection {
@@ -14,7 +16,20 @@ impl Connection {
         Connection {
             data: Arc::new(Mutex::new(0)),
             ports: Vec::new(),
+            id: None,
         }
+    }
+
+    pub fn new_with_id(id: usize) -> Self {
+        Connection {
+            data: Arc::new(Mutex::new(0)),
+            ports: Vec::new(),
+            id: Some(id)
+        }
+    }
+
+    pub fn get_id(&mut self) -> Option<usize> {
+        self.id
     }
 
     pub fn get(&mut self) -> Arc<Mutex<i32>> {
