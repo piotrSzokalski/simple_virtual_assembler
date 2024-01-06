@@ -4,6 +4,7 @@ use crate::vm::operand::Operand;
 
 pub enum JMPCondition {
     EQ,
+    NEQ,
     LST,
     GRT,
     NONE,
@@ -13,6 +14,8 @@ pub enum JMPCondition {
 #[derive(Debug, PartialEq, Eq, Clone, serde::Deserialize, serde::Serialize)]
 
 pub enum Opcode {
+    // ------------ Control instructions ------------ 
+
     /// Do nothing
     NOP,
     /// Halt execution
@@ -20,9 +23,13 @@ pub enum Opcode {
     /// Sleeps vm for given amount of milliseconds
     SLP(Operand),
 
+    // ------------ Moving operations ------------ 
+
     /// Copy value of first argument ot second
     MOV(Operand, Operand),
-    /// Sleep
+    
+    // ------------  Arithmetic operations ------------ 
+
     // Add operand to acc
     ADD(Operand),
     /// Subtract operand from acc
@@ -33,6 +40,12 @@ pub enum Opcode {
     DIV(Operand),
     /// Modulus acc by operand
     MOD(Operand),
+    /// Increments acc by 1
+    INC,
+    /// Decrements acc by 1
+    DEC,
+
+    // ------------  Bit operations ------------ 
 
     /// ANDx operand with  acc
     AND(Operand),
@@ -47,15 +60,19 @@ pub enum Opcode {
     /// Shifts bits to right
     SHR(Operand),
 
+    // ------------ Jumping logic ------------ 
+
     /// Compare
     CMP(Operand, Operand),
     /// Jum to label
     JMP(String),
-    /// Jump to label if equal
+    /// Jump to label if flag set to equal
     JE(String),
-    /// Jump to label if lesser
+    /// Jump to label if not flag set to equal
+    JNE(String),
+    /// Jump to label if flag set to lesser
     JL(String),
-    /// Jump to label if greater
+    /// Jump to label if flag set to greater
     JG(String),
 }
 

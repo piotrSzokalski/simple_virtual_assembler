@@ -235,9 +235,8 @@ impl VirtualMachine {
 
     //________________________________________________--
 
-    
     fn sleep(&mut self, operand: Operand) {
-        let duration =  match operand {
+        let duration = match operand {
             Operand::IntegerValue(value) => value,
             Operand::GeneralRegister(index) => self.r[index],
             Operand::PortRegister(index) => self.p[index].get(),
@@ -245,7 +244,7 @@ impl VirtualMachine {
             Operand::PC => self.pc.try_into().unwrap_or(0),
         };
         VirtualMachine::delay(self.delay_ms)
-        
+
         //thread::sleep(Duration::from_millis(duration.try_into().unwrap_or(0)));
     }
 
@@ -352,6 +351,7 @@ impl VirtualMachine {
         if let Some(&jmp_to) = self.labels.get(label) {
             match (self.flag, condition) {
                 (Flag::EQUAL, JMPCondition::EQ) => self.pc = jmp_to,
+                (Flag::LESSER | Flag::GREATER, JMPCondition::NEQ) => self.pc = jmp_to,
                 (Flag::GREATER, JMPCondition::GRT) => self.pc = jmp_to,
                 (Flag::LESSER, JMPCondition::LST) => self.pc = jmp_to,
                 (_, JMPCondition::NONE) => self.pc = jmp_to,
@@ -404,28 +404,40 @@ impl VirtualMachine {
 
         match instruction {
             Instruction::Opcode(opcode) => match opcode {
+                // ------------ Control instructions ------------
                 Opcode::HLT => {
                     return false;
                 }
                 Opcode::NOP => {}
-                Opcode::MOV(operand1, operand2) => self.move_operand(operand1, operand2),
                 Opcode::SLP(duration) => self.sleep(duration),
+                // ------------ Moving operations ------------
+                Opcode::MOV(operand1, operand2) => self.move_operand(operand1, operand2),
+
+                // ------------  Arithmetic operations ------------
                 Opcode::ADD(operand) => self.apply_operation(operand, |a, b| a.wrapping_add(b)),
                 Opcode::SUB(operand) => self.apply_operation(operand, |a, b| a.wrapping_sub(b)),
                 Opcode::MUL(operand) => self.apply_operation(operand, |a, b| a.wrapping_mul(b)),
                 Opcode::DIV(operand) => self.apply_operation(operand, |a, b| a.wrapping_div(b)),
                 Opcode::MOD(operand) => self.apply_operation(operand, |a, b| a.wrapping_rem(b)),
-                Opcode::AND(operand) => self.apply_operation(operand, |a, b| a & b),
+                Opcode::INC => self.acc = self.acc.wrapping_add(1),
+                Opcode::DEC => self.acc = self.acc.wrapping_sub(1),
+
+                // ------------  Bit operations ------------
                 Opcode::OR(operand) => self.apply_operation(operand, |a, b| a | b),
                 Opcode::XOR(operand) => self.apply_operation(operand, |a, b| a ^ b),
+                Opcode::AND(operand) => self.apply_operation(operand, |a, b| a & b),
                 Opcode::NOT => self.acc = !self.acc,
+                Opcode::SHL(operand) => self.apply_operation(operand, |a, b| a << b),
+                Opcode::SHR(operand) => self.apply_operation(operand, |a, b| a >> b),
+
+                // ------------ Jumping logic ------------
                 Opcode::CMP(operand1, operand2) => self.compare(operand1, operand2),
                 Opcode::JE(name) => self.jump_to_label(&name, JMPCondition::EQ),
                 Opcode::JL(name) => self.jump_to_label(&name, JMPCondition::LST),
                 Opcode::JG(name) => self.jump_to_label(&name, JMPCondition::GRT),
                 Opcode::JMP(name) => self.jump_to_label(&name, JMPCondition::NONE),
-                Opcode::SHL(operand) => self.apply_operation(operand, |a, b| a << b),
-                Opcode::SHR(operand) => self.apply_operation(operand, |a, b| a >> b),
+
+                Opcode::JNE(name) => self.jump_to_label(&name, JMPCondition::NEQ),
             },
             Instruction::Label(name) => self.add_label(name),
         }

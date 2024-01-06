@@ -202,6 +202,10 @@ impl Assembler {
                     self.parse_unary_instruction(Opcode::MOD, operands, current_line_number)
                 }
 
+                "INC" | "inc" => Ok(Instruction::new(Opcode::INC)),
+
+                "DEC" | "dec" => Ok(Instruction::new(Opcode::DEC)),
+
                 "AND" | "and" => {
                     self.parse_unary_instruction(Opcode::AND, operands, current_line_number)
                 }
@@ -224,12 +228,15 @@ impl Assembler {
                 ),
 
                 "JE" | "je" => self.parse_jump(Opcode::JE, operands, current_line_number),
+                "JNE" | "jne" => self.parse_jump(Opcode::JNE, operands, current_line_number),
                 "JL" | "jl" => self.parse_jump(Opcode::JL, operands, current_line_number),
                 "JG" | "jg" => self.parse_jump(Opcode::JG, operands, current_line_number),
                 "JMP" | "jmp" => self.parse_jump(Opcode::JMP, operands, current_line_number),
 
                 "HLT" | "hlt" => Ok(Instruction::new(Opcode::HLT)),
                 "NOP" | "nop" => Ok(Instruction::new(Opcode::NOP)),
+
+
                 
                 "SLP" | "slp" => self.parse_unary_instruction(Opcode::SLP, operands, current_line_number),
                 label if label.ends_with(':') => self.parse_label(label, current_line_number),
