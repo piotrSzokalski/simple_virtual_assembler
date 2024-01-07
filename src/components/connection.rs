@@ -30,11 +30,11 @@ impl Connection {
         }
     }
 
-    pub fn get_id(&mut self) -> Option<usize> {
+    pub fn get_id(&self) -> Option<usize> {
         self.id
     }
 
-    pub fn get(&mut self) -> Arc<Mutex<i32>> {
+    pub fn get(&self) -> Arc<Mutex<i32>> {
         self.data.clone()
     }
 
