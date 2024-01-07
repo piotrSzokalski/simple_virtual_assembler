@@ -31,6 +31,10 @@ impl Ram {
         }
     }
 
+    pub fn get_data_ref(&mut self) -> &Vec<i32> {
+        &self.data
+    }
+
     pub fn refresh(&mut self) {
         self.index = self.index_port.get().try_into().unwrap_or(0);
         self.data[self.index] = self.data_port.get();
