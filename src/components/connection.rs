@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Connection {
     data: Arc<Mutex<i32>>,
-   
+
     /// ids of ports connected
     ///
     /// optional, helper for ui app
@@ -26,7 +26,7 @@ impl Connection {
         Connection {
             data: Arc::new(Mutex::new(0)),
             ports: Vec::new(),
-            id: Some(id)
+            id: Some(id),
         }
     }
 
@@ -39,9 +39,9 @@ impl Connection {
     }
 
     /// Ads port id to the list of connected ports
-    /// 
+    ///
     /// Helper to manage connections
-    /// 
+    ///
     /// Mainly to rebuild connections in process of deserialization
     ///
     /// # Arguments
@@ -52,9 +52,9 @@ impl Connection {
     }
 
     /// Removes port id form the list of connected ports
-    /// 
+    ///
     /// Helper to manage connections
-    /// 
+    ///
     /// Mainly to rebuild connections in process of deserialization
     ///
     /// # Arguments
@@ -65,9 +65,9 @@ impl Connection {
     }
 
     /// Gets ids to ports connected to connection
-    /// 
+    ///
     /// Helper to manage connections
-    /// 
+    ///
     /// Mainly to rebuild connections in process of deserialization
     ///
     /// # Arguments
@@ -78,9 +78,9 @@ impl Connection {
     }
 
     /// Gets ids of vms and index of port connected to connection
-    /// 
+    ///
     /// Helper to manage connections
-    /// 
+    ///
     /// Mainly to rebuild connections in process of deserialization
     ///
     /// # Arguments
