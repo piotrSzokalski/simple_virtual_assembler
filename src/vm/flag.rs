@@ -1,6 +1,6 @@
 use std::fmt::{self, Display, Formatter, Result};
 
-/// Possible states of Flag register
+/// Possible states of Flag register of SVA
 #[derive(Debug, PartialEq, Eq, Clone, Copy, serde::Deserialize, serde::Serialize)]
 
 pub enum Flag {

@@ -292,10 +292,6 @@ impl Assembler {
                 line,
                 "".to_string(),
             ));
-            // return Err(ParsingError::new(
-            //     "Single operand instruction requires exactly 1 operand",
-            //     line,
-            // ));
         }
 
         let operand = self.parse_operand(operands[0], line, false)?;
@@ -314,17 +310,12 @@ impl Assembler {
                 line,
                 "".to_string(),
             ));
-            //return Err(ParsingError::new("Can't jump to empty label", line));
         } else if operands.len() > 1 {
             return Err(ParsingError::new(
                 ParsingError::TooManyOperands,
                 line,
                 "".to_string(),
             ));
-            // return Err(ParsingError::new(
-            //     "Jump instruction take only one operand",
-            //     line,
-            // ));
         }
         let label = operands[0];
         Ok(Instruction::new(opcode(label.to_string())))

@@ -7,6 +7,7 @@ use rust_i18n::t;
 
 use crate::vm::{instruction::Instruction, opcodes::Opcode, operand::Operand};
 
+/// Data contained in parsing error
 #[derive(Debug, serde::Deserialize, serde::Serialize, Clone, PartialEq)]
 pub struct ParsingErrorData {
     line: usize,
@@ -19,6 +20,7 @@ impl ParsingErrorData {
     }
 }
 
+/// Represents errors that can occur while attempting to assemble code to SVA instruction
 #[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub enum ParsingError {
     EmptyOperand(ParsingErrorData),
@@ -84,7 +86,7 @@ impl fmt::Display for ParsingError {
         };
 
         let error_data = self.get_data();
-
+        // format of error message:
         // { parsing error } : { line } \t { error type } \t { details/message }
         write!(
             f,

@@ -1,6 +1,6 @@
 use crate::vm::opcodes::Opcode;
 
-/// Instruction used by SVM,  wrapper for Opcode
+/// Represents instruction in SVA, either an opcode or label
 #[derive(PartialEq, Eq, Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub enum Instruction {
     Opcode(Opcode),
@@ -24,15 +24,3 @@ impl Instruction {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    // use crate::operand::Operand;
-
-    // use super::*;
-
-    // #[test]
-    // fn test_create_instruction() {
-    //     let instruction = Instruction::new(Opcode::ADD(Operand::IntegerValue(12)));
-    //     assert_eq!(instruction.opcode, Opcode::ADD(Operand::IntegerValue(12)));
-    // }
-}
