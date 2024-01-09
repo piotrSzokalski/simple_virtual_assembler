@@ -69,6 +69,15 @@ impl Ram {
         }
     }
 
+
+    pub fn get_index_port_ref(&mut self) -> &mut Port {
+        &mut self.index_port
+    }
+
+    pub fn get_data_port_ref(&mut self) -> &mut Port {
+        &mut self.index_port
+    }
+
     pub fn get_index_port(&self) -> Port {
         self.index_port.clone()
     }
