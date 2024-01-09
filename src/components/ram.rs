@@ -91,7 +91,7 @@ impl Ram {
     }
 
     pub fn get_data_port(&self) -> Port {
-        self.index_port.clone()
+        self.data_port.clone()
     }
 
     pub fn get_data_ref(&mut self) -> &Vec<i32> {
