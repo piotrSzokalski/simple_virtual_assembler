@@ -73,7 +73,7 @@ impl Ram {
         self.index_port.connect(connection);
     }
 
-    pub fn connect_dart_port(&mut self, connection: &mut Connection) {
+    pub fn connect_data_port(&mut self, connection: &mut Connection) {
         self.data_port.connect(connection);
     }
 
