@@ -2,7 +2,7 @@ use std::usize;
 
 use serde::{Deserialize, Serialize};
 
-use super::port::Port;
+use super::{port::Port, connection::{self, Connection}};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Ram {
@@ -67,6 +67,14 @@ impl Ram {
             index_port: Port::new(0),
             data_port: Port::new(0),
         }
+    }
+
+    pub fn connect_index(&mut self, connection: &mut Connection) {
+        self.index_port.connect(connection);
+    }
+
+    pub fn connect_dart_port(&mut self, connection: &mut Connection) {
+        self.data_port.connect(connection);
     }
 
 
