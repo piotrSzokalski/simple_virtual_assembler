@@ -27,6 +27,10 @@ impl Port {
         }
     }
 
+    pub fn get_ref_mut(&mut self) -> &mut Self {
+        self
+    }
+
     pub fn set(&mut self, new_value: i32) {
         match self {
             Port::Connected(value) => *value.lock().unwrap() = new_value,
