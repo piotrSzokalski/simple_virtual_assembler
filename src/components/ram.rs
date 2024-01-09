@@ -69,7 +69,7 @@ impl Ram {
         }
     }
 
-    pub fn connect_index(&mut self, connection: &mut Connection) {
+    pub fn connect_index_port(&mut self, connection: &mut Connection) {
         self.index_port.connect(connection);
     }
 
