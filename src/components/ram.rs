@@ -1,4 +1,6 @@
-use serde::{Serialize, Deserialize};
+use std::usize;
+
+use serde::{Deserialize, Serialize};
 
 use super::port::Port;
 
@@ -21,6 +23,32 @@ impl Ram {
             data_port: Port::new(0),
         }
     }
+
+    pub fn with_size(mut self, size: usize) -> Self {
+        self.data = vec![0; size];
+        self
+    }
+
+    pub fn with_id(mut self, id: usize) -> Self {
+        self.id = Some(id);
+        self
+    }
+
+    pub fn with_id_and_size(mut self, id: usize, size: usize) -> Self {
+        self.id = Some(id);
+        self.data = vec![0; size];
+        self
+    }
+
+    pub fn new_with_size(size: usize) -> Self {
+        Self {
+            id: None,
+            index: 0,
+            data: vec![0; size],
+            index_port: Port::new(0),
+            data_port: Port::new(0),
+        }
+    }
     pub fn new_with_id(id: usize) -> Self {
         Self {
             id: Some(id),
@@ -29,6 +57,24 @@ impl Ram {
             index_port: Port::new(0),
             data_port: Port::new(0),
         }
+    }
+
+    pub fn new_with_id_and_size(id: usize, size: usize) -> Self {
+        Self {
+            id: Some(id),
+            index: 0,
+            data: vec![0; size],
+            index_port: Port::new(0),
+            data_port: Port::new(0),
+        }
+    }
+
+    pub fn get_index_port(&self) -> Port {
+        self.index_port.clone()
+    }
+
+    pub fn get_data_port(&self) -> Port {
+        self.index_port.clone()
     }
 
     pub fn get_data_ref(&mut self) -> &Vec<i32> {
@@ -40,4 +86,3 @@ impl Ram {
         self.data[self.index] = self.data_port.get();
     }
 }
-
