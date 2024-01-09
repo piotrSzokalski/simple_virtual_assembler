@@ -90,6 +90,7 @@ impl Connection {
         let x: Vec<(i32, usize)> = self
             .ports
             .iter()
+            .filter(|id| id.starts_with("R"))
             .map(|id| {
                 let split = id.split(delimiter).collect::<Vec<&str>>();
                 let vm_id = split[0].parse::<i32>().unwrap();
