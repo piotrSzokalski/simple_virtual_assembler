@@ -90,7 +90,7 @@ impl Connection {
         let x: Vec<(i32, usize)> = self
             .ports
             .iter()
-            .filter(|id| id.starts_with("R"))
+            .filter(|id| !id.starts_with("R"))
             .map(|id| {
                 let split = id.split(delimiter).collect::<Vec<&str>>();
                 let vm_id = split[0].parse::<i32>().unwrap();
@@ -108,7 +108,7 @@ mod test {
     #[test]
     fn test_getting_connected_vms_and_ports_list() {
         let port_ids = Vec::from([
-            "0P0", "0P1", "0P2", "0P3", "1P0", "1P1", "1P2", "1P3", "1P3", //
+            "R0P0", "0P1", "0P2", "0P3", "1P0", "1P1", "1P2", "1P3", "1P3", //
             "10P3", "9993P3",
         ]);
         let mut connection = Connection::new();
