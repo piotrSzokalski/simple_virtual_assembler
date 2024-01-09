@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Connection {
     data: Arc<Mutex<i32>>,
-   
+
     /// ids of ports connected
     ///
     /// optional, helper for ui app
@@ -26,22 +26,22 @@ impl Connection {
         Connection {
             data: Arc::new(Mutex::new(0)),
             ports: Vec::new(),
-            id: Some(id)
+            id: Some(id),
         }
     }
 
-    pub fn get_id(&mut self) -> Option<usize> {
+    pub fn get_id(&self) -> Option<usize> {
         self.id
     }
 
-    pub fn get(&mut self) -> Arc<Mutex<i32>> {
+    pub fn get(&self) -> Arc<Mutex<i32>> {
         self.data.clone()
     }
 
     /// Ads port id to the list of connected ports
-    /// 
+    ///
     /// Helper to manage connections
-    /// 
+    ///
     /// Mainly to rebuild connections in process of deserialization
     ///
     /// # Arguments
@@ -52,9 +52,9 @@ impl Connection {
     }
 
     /// Removes port id form the list of connected ports
-    /// 
+    ///
     /// Helper to manage connections
-    /// 
+    ///
     /// Mainly to rebuild connections in process of deserialization
     ///
     /// # Arguments
@@ -65,9 +65,9 @@ impl Connection {
     }
 
     /// Gets ids to ports connected to connection
-    /// 
+    ///
     /// Helper to manage connections
-    /// 
+    ///
     /// Mainly to rebuild connections in process of deserialization
     ///
     /// # Arguments
@@ -78,9 +78,9 @@ impl Connection {
     }
 
     /// Gets ids of vms and index of port connected to connection
-    /// 
+    ///
     /// Helper to manage connections
-    /// 
+    ///
     /// Mainly to rebuild connections in process of deserialization
     ///
     /// # Arguments
@@ -90,6 +90,7 @@ impl Connection {
         let x: Vec<(i32, usize)> = self
             .ports
             .iter()
+            .filter(|id| !id.starts_with("R"))
             .map(|id| {
                 let split = id.split(delimiter).collect::<Vec<&str>>();
                 let vm_id = split[0].parse::<i32>().unwrap();
@@ -107,7 +108,7 @@ mod test {
     #[test]
     fn test_getting_connected_vms_and_ports_list() {
         let port_ids = Vec::from([
-            "0P0", "0P1", "0P2", "0P3", "1P0", "1P1", "1P2", "1P3", "1P3", //
+            "R0P0", "0P1", "0P2", "0P3", "1P0", "1P1", "1P2", "1P3", "1P3", //
             "10P3", "9993P3",
         ]);
         let mut connection = Connection::new();
