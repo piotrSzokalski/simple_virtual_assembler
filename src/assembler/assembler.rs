@@ -10,7 +10,7 @@ use super::parsing_err::ParsingError;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Assembler {
-    stack_present: bool
+    stack_present: bool,
 }
 impl Assembler {
     pub fn new() -> Assembler {
@@ -226,8 +226,12 @@ impl Assembler {
                 }
                 "NOT" | "not" => Ok(Instruction::new(Opcode::NOT)),
 
-                "SHL" | "shl" => self.parse_unary_instruction(Opcode::SHL, operands, current_line_number),
-                "SHR" | "shr" => self.parse_unary_instruction(Opcode::SHR, operands, current_line_number),
+                "SHL" | "shl" => {
+                    self.parse_unary_instruction(Opcode::SHL, operands, current_line_number)
+                }
+                "SHR" | "shr" => {
+                    self.parse_unary_instruction(Opcode::SHR, operands, current_line_number)
+                }
 
                 "CMP" | "cmp" => self.parse_binary_instruction(
                     Opcode::CMP,
@@ -245,11 +249,40 @@ impl Assembler {
                 "HLT" | "hlt" => Ok(Instruction::new(Opcode::HLT)),
                 "NOP" | "nop" => Ok(Instruction::new(Opcode::NOP)),
 
-                "PHS" | "psh" => self.parse_unary_instruction(Opcode::PSH, operands, current_line_number),
-                "POP" | "pop" => self.parse_unary_instruction(Opcode::POP, operands, current_line_number),
+                "PHS" | "psh" => {
+                    if self.stack_present {
+                        return self.parse_unary_instruction(
+                            Opcode::PSH,
+                            operands,
+                            current_line_number,
+                        );
+                    } else {
+                        return Err(ParsingError::new(
+                            ParsingError::StackNotPresent,
+                            current_line_number,
+                            "stack not present".to_owned(),
+                        ));
+                    }
+                }
+                "POP" | "pop" => {
+                    if self.stack_present {
+                        return self.parse_unary_instruction(
+                            Opcode::POP,
+                            operands,
+                            current_line_number,
+                        );
+                    } else {
+                        return Err(ParsingError::new(
+                            ParsingError::StackNotPresent,
+                            current_line_number,
+                            "stack not present".to_owned(),
+                        ));
+                    }
+                }
 
-                
-                "SLP" | "slp" => self.parse_unary_instruction(Opcode::SLP, operands, current_line_number),
+                "SLP" | "slp" => {
+                    self.parse_unary_instruction(Opcode::SLP, operands, current_line_number)
+                }
                 label if label.ends_with(':') => self.parse_label(label, current_line_number),
                 _ => Err(ParsingError::new(
                     ParsingError::Unknown,

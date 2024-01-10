@@ -35,6 +35,7 @@ pub enum ParsingError {
     NotImplanted(ParsingErrorData),
     NotEnoughOperands(ParsingErrorData),
     TooManyOperands(ParsingErrorData),
+    StackNotPresent(ParsingErrorData),
 }
 
 impl ParsingError {
@@ -60,6 +61,7 @@ impl ParsingError {
             ParsingError::NotImplanted(data) => data.clone(),
             ParsingError::NotEnoughOperands(data) => data.clone(),
             ParsingError::TooManyOperands(data) => data.clone(),
+            ParsingError::StackNotPresent(data) => data.clone(),
         }
     }
 
@@ -83,6 +85,7 @@ impl fmt::Display for ParsingError {
             ParsingError::NotImplanted(_) => t!("error.not_implanted"),
             ParsingError::NotEnoughOperands(_) => t!("error.not_enough_operands"),
             ParsingError::TooManyOperands(_) => t!("error.too_many_operands"),
+            ParsingError::StackNotPresent(_) => t!("error.stack_not_present"),
         };
 
         let error_data = self.get_data();

@@ -38,3 +38,6 @@ error.not_enough_operands:
 error.too_many_operands:
   en: Too many operands
   pl: Zbyt wiele operandów
+error.stack_not_present:
+  en: This vm does not have stack
+  pl: Ta maszyna wirtualna nie ma stosu 
