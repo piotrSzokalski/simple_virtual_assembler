@@ -31,9 +31,11 @@ fn assembler_and_with_prints(program_text: &str) -> Result<VirtualMachine, Parsi
     let mut running = true;
     let mut counter = 0;
 
-
     while running {
-        println!("__________________________{}__________________________", counter);
+        println!(
+            "__________________________{}__________________________",
+            counter
+        );
         println!("{}", vm);
         println!("______________________________________________________");
         running = vm.execute();
@@ -127,6 +129,37 @@ fn assembling_and_running_division_by_subtracting() {
         Ok(vm) => println!("{}", vm),
         Err(e) => println!("{:?}", e),
     }
+}
+
+#[test]
+fn test_stack() {
+    let program_text = r#"
+    push_stk:
+        inc
+        psh acc
+        cmp acc 40
+        jl push_stk
+    pop acc
+    pop r0
+    pop r1
+    pop r2
+    pop r3
+    HLT
+    "#;
+    
+    let mut assembler= Assembler::new().with_stack();
+    let result = assembler.parse(program_text);
+    match result {
+        Ok(program) => {
+            let mut vm = VirtualMachine::new().with_stack(32);
+            vm.load_program(program);
+            vm.run();
+            println!("{:?}", vm);
+        }
+        Err(err) => println!("{}", err),
+    };
+    
+
 }
 
 //TODO:

@@ -106,6 +106,7 @@ impl VirtualMachine {
     pub fn with_stack(mut self, size: usize) -> VirtualMachine {
         self.stack = Vec::with_capacity(size);
         self.stack_present = true;
+        self.stack_size = size;
         self
     }
 
@@ -425,6 +426,7 @@ impl VirtualMachine {
 
         if self.stack.len() < self.stack_size {
             self.stack.push(value);
+            return;
         }
         *self.stack.index_mut(self.stack_size - 1) = value;
     }
