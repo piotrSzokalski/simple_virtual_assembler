@@ -9,10 +9,19 @@ use crate::vm::{instruction::Instruction, opcodes::Opcode, operand::Operand};
 use super::parsing_err::ParsingError;
 
 #[derive(serde::Deserialize, serde::Serialize)]
-pub struct Assembler {}
+pub struct Assembler {
+    stack_present: bool
+}
 impl Assembler {
     pub fn new() -> Assembler {
-        Assembler {}
+        Assembler {
+            stack_present: false,
+        }
+    }
+
+    pub fn with_stack(mut self) -> Assembler {
+        self.stack_present = true;
+        self
     }
 
     fn parse_operand(
@@ -236,6 +245,8 @@ impl Assembler {
                 "HLT" | "hlt" => Ok(Instruction::new(Opcode::HLT)),
                 "NOP" | "nop" => Ok(Instruction::new(Opcode::NOP)),
 
+                "PHS" | "psh" => self.parse_unary_instruction(Opcode::PSH, operands, current_line_number),
+                "POP" | "pop" => self.parse_unary_instruction(Opcode::POP, operands, current_line_number),
 
                 
                 "SLP" | "slp" => self.parse_unary_instruction(Opcode::SLP, operands, current_line_number),

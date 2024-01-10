@@ -1,5 +1,6 @@
-use crate::vm::operand::Operand;
-/// Conditions determine under what conditions jump should occur 
+use super::operand::Operand;
+
+/// Conditions determine under what conditions jump should occur
 #[derive(Debug, PartialEq, Eq, Clone, serde::Deserialize, serde::Serialize)]
 pub enum JMPCondition {
     EQ,
@@ -12,7 +13,7 @@ pub enum JMPCondition {
 /// Opcodes used by SVA
 #[derive(Debug, PartialEq, Eq, Clone, serde::Deserialize, serde::Serialize)]
 pub enum Opcode {
-    // ------------ Control instructions ------------ 
+    // ------------ Control instructions ------------
 
     /// Do nothing
     NOP,
@@ -21,12 +22,11 @@ pub enum Opcode {
     /// Sleeps vm for given amount of milliseconds
     SLP(Operand),
 
-    // ------------ Moving operations ------------ 
-
+    // ------------ Moving operations ------------
     /// Copy value of first argument ot second
     MOV(Operand, Operand),
-    
-    // ------------  Arithmetic operations ------------ 
+
+    // ------------  Arithmetic operations ------------
 
     // Add operand to acc
     ADD(Operand),
@@ -43,7 +43,7 @@ pub enum Opcode {
     /// Decrements acc by 1
     DEC,
 
-    // ------------  Bit operations ------------ 
+    // ------------  Bit operations ------------
 
     /// ANDx operand with  acc
     AND(Operand),
@@ -58,7 +58,7 @@ pub enum Opcode {
     /// Shifts bits to right
     SHR(Operand),
 
-    // ------------ Jumping logic ------------ 
+    // ------------ Jumping logic ------------
 
     /// Compare
     CMP(Operand, Operand),
@@ -72,4 +72,11 @@ pub enum Opcode {
     JL(String),
     /// Jump to label if flag set to greater
     JG(String),
+
+    // ------------ Stack ------------
+
+    /// Copies operand to stack
+    PSH(Operand),
+    /// Pops form a stack
+    POP(Operand),
 }

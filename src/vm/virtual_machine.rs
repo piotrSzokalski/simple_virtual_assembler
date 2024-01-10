@@ -16,10 +16,9 @@ use crate::vm::{
     flag::Flag,
     instruction::Instruction,
     opcodes::{JMPCondition, Opcode},
-    operand::Operand,
 };
 
-use super::operand;
+use super::operand::{self, Operand};
 
 /// Status of vm
 #[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq, Clone, Copy)]
@@ -50,6 +49,12 @@ pub struct VirtualMachine {
     status: VmStatus,
     /// Delay between instruction in ms ( sleep between execution )
     delay_ms: u32,
+    /// vm has stack
+    stack_present: bool,
+    /// Stack size
+    stack_size: usize,
+    /// Stack
+    stack: Vec<i32>,
 }
 
 impl VirtualMachine {
@@ -68,6 +73,9 @@ impl VirtualMachine {
             program: Vec::new(),
             status: VmStatus::Initial,
             delay_ms: 0,
+            stack_present: false,
+            stack_size: 0,
+            stack: Vec::new(),
         }
     }
     /// Create an instance of VM
@@ -89,7 +97,16 @@ impl VirtualMachine {
             labels: HashMap::new(),
             status: VmStatus::Initial,
             delay_ms: 0,
+            stack_present: false,
+            stack_size: 0,
+            stack: Vec::new(),
         }
+    }
+
+    pub fn with_stack(mut self, size: usize) -> VirtualMachine {
+        self.stack = Vec::with_capacity(size);
+        self.stack_present = true;
+        self
     }
 
     pub fn load_program(&mut self, program: Vec<Instruction>) {
@@ -146,8 +163,12 @@ impl VirtualMachine {
         self.status
     }
 
+    pub fn get_stack(&self) -> Vec<i32> {
+        self.stack.clone()
+    }
+
     /// Gets full state of virtual machine (acc, pc, flag, r, p, labels, program)
-    pub fn get_state_full(
+    pub fn get_state_full_old(
         &self,
     ) -> (
         i32,
@@ -389,6 +410,40 @@ impl VirtualMachine {
         }
     }
 
+    /// pushes operand to stack ( if stack is present)
+    fn push_to_stack(&mut self, operand: Operand) {
+        if !self.stack_present {
+            return;
+        }
+        let value = match operand {
+            Operand::IntegerValue(value) => value,
+            Operand::GeneralRegister(index) => self.r[index],
+            Operand::PortRegister(index) => self.p[index].get(),
+            Operand::ACC => self.acc,
+            Operand::PC => self.pc.try_into().unwrap(),
+        };
+
+        if self.stack.len() < self.stack_size {
+            self.stack.push(value);
+        }
+        *self.stack.index_mut(self.stack_size - 1) = value;
+    }
+
+    /// pushes operand from stack ( if stack is present)
+    fn pop_from_stack(&mut self, operand: Operand) {
+        if !self.stack_present {
+            return;
+        }
+        let value = self.stack.pop().unwrap_or(0);
+        match operand {
+            Operand::IntegerValue(_) => unreachable!(),
+            Operand::GeneralRegister(index) => self.r[index] = value,
+            Operand::PortRegister(index) => self.p[index].set(value),
+            Operand::ACC => self.acc = value,
+            Operand::PC => self.pc = value.try_into().unwrap_or(0),
+        }
+    }
+
     /// Fetches next instruction from the program and increments program counter by one
     fn fetch(&mut self) -> Instruction {
         let opcode = self.program[self.pc].clone();
@@ -438,6 +493,9 @@ impl VirtualMachine {
                 Opcode::JMP(name) => self.jump_to_label(&name, JMPCondition::NONE),
 
                 Opcode::JNE(name) => self.jump_to_label(&name, JMPCondition::NEQ),
+                // ------------ Stack operations ------------
+                Opcode::PSH(operand) => self.push_to_stack(operand),
+                Opcode::POP(operand) => self.pop_from_stack(operand),
             },
             Instruction::Label(name) => self.add_label(name),
         }
@@ -570,7 +628,7 @@ mod tests {
 
     use std::vec;
 
-    use crate::vm::operand::Operand;
+    
 
     use super::*;
 
@@ -887,9 +945,3 @@ mod tests {
         println!("{}", vm);
     }
 }
-
-// Maszyna wirtualna posiada konfigurowalna liczbę rejestrów ogólnego użytku o domyślnych nazwach r0, r1, r2..,  oraz rejestrów pełniących rolę portów do komunikacji z zewnętrznymi peryferiami o domyślnych nazwach p0, p1, p2… .Poza tym będzie posiadać następujące rejestry specjalne:
-// acc - Akumulator, rejestr używany do wykonywania operacji arytmetycznych i bitowych
-// flg - Flagi, rejestr przechowujący wynik porównania, instrukcji cmp
-// pc - Licznik programu, rejestr przechowujący następną linię kodu do wykonania, inkrementowany po wykonaniu każdej linii kodu
-// ir - Rejestr Przerwań, przechowuje informacje od przerwaniach działania procesora
