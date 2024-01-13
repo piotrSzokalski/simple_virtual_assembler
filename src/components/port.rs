@@ -38,6 +38,13 @@ impl Port {
         }
     }
 
+    pub fn get_conn_id(&mut self) -> Option<usize> {
+        match self {
+            Port::Connected(_, id) => *id,
+            Port::Disconnected(_) => None,
+        }
+    }
+
     pub fn connect(&mut self, connection: &mut Connection) {
         *self = Port::Connected(connection.get(), connection.get_id());
     }
