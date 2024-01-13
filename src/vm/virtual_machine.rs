@@ -249,7 +249,7 @@ impl VirtualMachine {
     /// Disconnects from connection
     pub fn disconnect(&mut self, index: usize) {
         let value = match &self.p[index] {
-            Port::Connected(_) => self.p[index].get(),
+            Port::Connected(_, _) => self.p[index].get(),
             Port::Disconnected(value) => *value,
         };
         self.p[index] = Port::Disconnected(value);

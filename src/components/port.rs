@@ -11,7 +11,7 @@ use super::connection::{self, Connection};
 /// Port used for communication between vm and other components
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Port {
-    Connected(Arc<Mutex<i32>>),
+    Connected(Arc<Mutex<i32>>, Option<usize>),
     Disconnected(i32),
 }
 
@@ -22,7 +22,7 @@ impl Port {
 
     pub fn get(&mut self) -> i32 {
         match self {
-            Port::Connected(value) => *value.lock().unwrap(),
+            Port::Connected(value, _) => *value.lock().unwrap(),
             Port::Disconnected(value) => *value,
         }
     }
@@ -33,25 +33,25 @@ impl Port {
 
     pub fn set(&mut self, new_value: i32) {
         match self {
-            Port::Connected(value) => *value.lock().unwrap() = new_value,
+            Port::Connected(value, _) => *value.lock().unwrap() = new_value,
             Port::Disconnected(value) => *value = new_value,
         }
     }
 
     pub fn connect(&mut self, connection: &mut Connection) {
-        *self = Port::Connected(connection.get());
+        *self = Port::Connected(connection.get(), connection.get_id());
     }
 }
 
 impl PartialEq for Port {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::Connected(l), Self::Connected(r)) => {
+            (Self::Connected(l, _), Self::Connected(r, _)) => {
                 l.lock().unwrap().clone() == r.lock().unwrap().clone()
             }
             (Self::Disconnected(l), Self::Disconnected(r)) => *l == *r,
-            (Self::Connected(l), Self::Disconnected(r)) => l.lock().unwrap().clone() == *r,
-            (Self::Disconnected(l), Self::Connected(r)) => *l == r.lock().unwrap().clone(),
+            (Self::Connected(l, _), Self::Disconnected(r)) => l.lock().unwrap().clone() == *r,
+            (Self::Disconnected(l), Self::Connected(r, _)) => *l == r.lock().unwrap().clone(),
             _ => false,
         }
     }
@@ -60,11 +60,11 @@ impl PartialEq for Port {
 impl fmt::Display for Port {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let data = match self {
-            Port::Connected(lock) => *lock.lock().unwrap(),
+            Port::Connected(lock, _) => *lock.lock().unwrap(),
             Port::Disconnected(value) => *value,
         };
         match  self {
-            Port::Connected(_) => write!(f, "C:{}", data),
+            Port::Connected(_, _) => write!(f, "C:{}", data),
             Port::Disconnected(_) => write!(f, "D:{}", data),
         }
         
