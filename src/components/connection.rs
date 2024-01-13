@@ -1,4 +1,8 @@
-use serde::{de::SeqAccess, de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{
+    de::SeqAccess,
+    de::{value::Error, Visitor},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use std::sync::{Arc, Mutex};
 /// Shared data used to connect vms, analogs to a wire connecting them
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -48,6 +52,9 @@ impl Connection {
     ///
     /// * id String - arbitrary name used to identify connected port
     pub fn add_port_id(&mut self, id: String) {
+        if self.ports.contains(&id) {
+            return;
+        }
         self.ports.push(id);
     }
 
@@ -100,6 +107,26 @@ impl Connection {
             .collect();
         x
     }
+
+    pub fn get_connected_rams(&mut self) -> Vec<(usize, usize)> {
+        let x: Vec<(usize, usize)> = self
+            .ports
+            .iter()
+            .filter(|id| id.starts_with("R"))
+            .map(|id| {
+                let split = id[1..].split(':').collect::<Vec<&str>>();
+                let ram_id = split[0].clone().parse::<usize>().unwrap();
+                let ram_port: usize = match split[1] {
+                    "index" => 0,
+                    "data" => 1,
+                    _ => 0,
+                };
+
+                (ram_id, ram_port)
+            })
+            .collect();
+        x
+    }
 }
 
 mod test {
@@ -116,6 +143,19 @@ mod test {
             connection.add_port_id(id.to_string());
         }
         let result = connection.get_connected_vms_and_ports('P');
+        print!("{:?}", result);
+    }
+
+    #[test]
+    fn test_getting_ram_ports() {
+        let port_ids = Vec::from([
+            "R0:data", "R1:data", "R0:index", "R1:data", "R2223:data", "R999134:index"
+        ]);
+        let mut connection = Connection::new();
+        for id in port_ids.iter() {
+            connection.add_port_id(id.to_string());
+        }
+        let result = connection.get_connected_rams();
         print!("{:?}", result);
     }
 }
