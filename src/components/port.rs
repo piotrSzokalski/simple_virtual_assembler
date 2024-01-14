@@ -56,16 +56,10 @@ impl Port {
         *self = Port::Connected(connection.get(), connection.get_id());
     }
 
-    pub fn disconnect_and_unlist(&mut self, connection: &mut Connection) {
-        let value = self.get();
-        *self = Port::Disconnected(value);
-
-    }
     pub fn disconnect(&mut self, connection: &mut Connection) {
         let value = self.get();
         *self = Port::Disconnected(value);
     }
-
 }
 
 impl PartialEq for Port {
@@ -88,10 +82,9 @@ impl fmt::Display for Port {
             Port::Connected(lock, _) => *lock.lock().unwrap(),
             Port::Disconnected(value) => *value,
         };
-        match  self {
+        match self {
             Port::Connected(_, _) => write!(f, "C:{}", data),
             Port::Disconnected(_) => write!(f, "D:{}", data),
         }
-        
     }
 }
