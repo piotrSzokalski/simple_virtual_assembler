@@ -14,6 +14,7 @@ pub struct Ram {
     data: Vec<i32>,
     index_port: Port,
     data_port: Port,
+    mode: Port,
 }
 
 impl Ram {
@@ -24,6 +25,7 @@ impl Ram {
             data: vec![0; 32],
             index_port: Port::new(0),
             data_port: Port::new(0),
+            mode: Port::new(0),
         }
     }
 
@@ -43,35 +45,6 @@ impl Ram {
         self
     }
 
-    pub fn new_with_size(size: usize) -> Self {
-        Self {
-            id: None,
-            index: 0,
-            data: vec![0; size],
-            index_port: Port::new(0),
-            data_port: Port::new(0),
-        }
-    }
-    pub fn new_with_id(id: usize) -> Self {
-        Self {
-            id: Some(id),
-            index: 0,
-            data: vec![0; 32],
-            index_port: Port::new(0),
-            data_port: Port::new(0),
-        }
-    }
-
-    pub fn new_with_id_and_size(id: usize, size: usize) -> Self {
-        Self {
-            id: Some(id),
-            index: 0,
-            data: vec![0; size],
-            index_port: Port::new(0),
-            data_port: Port::new(0),
-        }
-    }
-
     pub fn connect_index_port(&mut self, connection: &mut Connection) {
         self.index_port.connect(connection);
     }
@@ -83,7 +56,7 @@ impl Ram {
     pub fn disconnect_index_port(&mut self) {
         let value = match &self.index_port {
             Port::Connected(v, e) => *v.lock().unwrap(),
-            Port::Disconnected(v) =>*v,
+            Port::Disconnected(v) => *v,
         };
 
         self.index_port = Port::Disconnected(value);
@@ -92,7 +65,7 @@ impl Ram {
     pub fn disconnect_data_port(&mut self) {
         let value = match &self.data_port {
             Port::Connected(v, e) => *v.lock().unwrap(),
-            Port::Disconnected(v) =>*v,
+            Port::Disconnected(v) => *v,
         };
 
         self.data_port = Port::Disconnected(value);
@@ -120,8 +93,13 @@ impl Ram {
 
     pub fn refresh(&mut self) {
         self.index = self.index_port.get().try_into().unwrap_or(0);
-        if self.index < self.data.len() {
+        if self.index >= self.data.len() {
+           self.index = self.data.len() - 1;
+        }
+        if self.mode.get() == 0 {
             self.data[self.index] = self.data_port.get();
+        } else {
+            self.data_port.set(self.data[self.index]);
         }
     }
 }
