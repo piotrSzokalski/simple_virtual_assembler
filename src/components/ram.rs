@@ -2,7 +2,10 @@ use std::usize;
 
 use serde::{Deserialize, Serialize};
 
-use super::{port::Port, connection::{self, Connection}};
+use super::{
+    connection::{self, Connection},
+    port::Port,
+};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Ram {
@@ -77,7 +80,6 @@ impl Ram {
         self.data_port.connect(connection);
     }
 
-
     pub fn get_index_port_ref(&mut self) -> &mut Port {
         &mut self.index_port
     }
@@ -100,6 +102,8 @@ impl Ram {
 
     pub fn refresh(&mut self) {
         self.index = self.index_port.get().try_into().unwrap_or(0);
-        self.data[self.index] = self.data_port.get();
+        if self.index < self.data.len() {
+            self.data[self.index] = self.data_port.get();
+        }
     }
 }
