@@ -80,6 +80,24 @@ impl Ram {
         self.data_port.connect(connection);
     }
 
+    pub fn disconnect_index_port(&mut self) {
+        let value = match &self.index_port {
+            Port::Connected(v, e) => *v.lock().unwrap(),
+            Port::Disconnected(v) =>*v,
+        };
+
+        self.index_port = Port::Disconnected(value);
+    }
+
+    pub fn disconnect_data_port(&mut self) {
+        let value = match &self.data_port {
+            Port::Connected(v, e) => *v.lock().unwrap(),
+            Port::Disconnected(v) =>*v,
+        };
+
+        self.data_port = Port::Disconnected(value);
+    }
+
     pub fn get_index_port_ref(&mut self) -> &mut Port {
         &mut self.index_port
     }
