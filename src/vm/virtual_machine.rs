@@ -255,6 +255,21 @@ impl VirtualMachine {
         self.p[index] = Port::Disconnected(value);
     }
 
+    pub fn disconnect_and_unlist(&mut self, index: usize, connection: &mut Connection) {
+        let value = match &self.p[index] {
+            Port::Connected(_, _) => self.p[index].get(),
+            Port::Disconnected(value) => *value,
+        };
+
+        let id =self.p[index].get_id();
+        if let Some(id) = id {
+            let id = format!("{}P{}",id, index);
+            connection.remove_port_id(id);
+        }
+
+        self.p[index] = Port::Disconnected(value);
+    }   
+
     //________________________________________________--
 
     fn sleep(&mut self, operand: Operand) {
