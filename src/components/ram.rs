@@ -14,7 +14,7 @@ pub struct Ram {
     data: Vec<i32>,
     index_port: Port,
     data_port: Port,
-    mode: Port,
+    mode_port: Port,
 }
 
 impl Ram {
@@ -25,7 +25,7 @@ impl Ram {
             data: vec![0; 32],
             index_port: Port::new(0),
             data_port: Port::new(0),
-            mode: Port::new(0),
+            mode_port: Port::new(0),
         }
     }
 
@@ -53,6 +53,10 @@ impl Ram {
         self.data_port.connect(connection);
     }
 
+    pub fn connect_mode_port(&mut self, connection: &mut Connection) {
+        self.mode_port.connect(connection);
+    }
+
     pub fn disconnect_index_port(&mut self) {
         let value = match &self.index_port {
             Port::Connected(v, e) => *v.lock().unwrap(),
@@ -64,6 +68,15 @@ impl Ram {
 
     pub fn disconnect_data_port(&mut self) {
         let value = match &self.data_port {
+            Port::Connected(v, e) => *v.lock().unwrap(),
+            Port::Disconnected(v) => *v,
+        };
+
+        self.data_port = Port::Disconnected(value);
+    }
+
+    pub fn disconnect_mode_port(&mut self) {
+        let value = match &self.mode_port {
             Port::Connected(v, e) => *v.lock().unwrap(),
             Port::Disconnected(v) => *v,
         };
@@ -96,7 +109,7 @@ impl Ram {
         if self.index >= self.data.len() {
            self.index = self.data.len() - 1;
         }
-        if self.mode.get() == 0 {
+        if self.mode_port.get() == 0 {
             self.data[self.index] = self.data_port.get();
         } else {
             self.data_port.set(self.data[self.index]);
