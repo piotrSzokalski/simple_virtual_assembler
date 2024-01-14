@@ -100,6 +100,10 @@ impl Ram {
         self.data_port.clone()
     }
 
+    pub fn get_mode_port(&self) -> Port {
+        self.mode_port.clone()
+    }
+
     pub fn get_data_ref(&mut self) -> &Vec<i32> {
         &self.data
     }
