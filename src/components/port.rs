@@ -20,6 +20,13 @@ impl Port {
         Port::Disconnected(value)
     }
 
+    pub fn get_id(&self) -> Option<usize> {
+        match self {
+            Port::Connected(_, id) => id.clone(),
+            Port::Disconnected(_) => None,
+        }
+    }
+
     pub fn get(&mut self) -> i32 {
         match self {
             Port::Connected(value, _) => *value.lock().unwrap(),
@@ -48,6 +55,17 @@ impl Port {
     pub fn connect(&mut self, connection: &mut Connection) {
         *self = Port::Connected(connection.get(), connection.get_id());
     }
+
+    pub fn disconnect_and_unlist(&mut self, connection: &mut Connection) {
+        let value = self.get();
+        *self = Port::Disconnected(value);
+
+    }
+    pub fn disconnect(&mut self, connection: &mut Connection) {
+        let value = self.get();
+        *self = Port::Disconnected(value);
+    }
+
 }
 
 impl PartialEq for Port {
