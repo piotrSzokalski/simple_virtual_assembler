@@ -111,6 +111,7 @@ impl VirtualMachine {
     }
 
     pub fn load_program(&mut self, program: Vec<Instruction>) {
+        self.labels.clear();
         self.program = program;
     }
 
