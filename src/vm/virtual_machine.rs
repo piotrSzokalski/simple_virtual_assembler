@@ -122,7 +122,7 @@ impl VirtualMachine {
     pub fn set_labels(&mut self) {
         for instruction in &self.program {
             if let Instruction::Label(name, line) = instruction {
-                self.labels.insert(name.clone(), *line);
+                self.labels.insert(name.clone(), line + 1);
             }
         }
     }
