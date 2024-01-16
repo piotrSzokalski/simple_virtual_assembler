@@ -119,6 +119,7 @@ impl Connection {
                 let ram_port: usize = match split[1] {
                     "index" => 0,
                     "data" => 1,
+                    "mode" => 2,
                     _ => 0,
                 };
 
@@ -149,7 +150,13 @@ mod test {
     #[test]
     fn test_getting_ram_ports() {
         let port_ids = Vec::from([
-            "R0:data", "R1:data", "R0:index", "R1:data", "R2223:data", "R999134:index"
+            "R0:data",
+            "R1:data",
+            "R0:index",
+            "R1:data",
+            "R2223:data",
+            "R999134:index",
+            "R22:mode",
         ]);
         let mut connection = Connection::new();
         for id in port_ids.iter() {
