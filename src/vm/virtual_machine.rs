@@ -142,6 +142,10 @@ impl VirtualMachine {
         self.p.clone()
     }
 
+    pub fn get_ports_ref(&self)  {
+
+    }
+
     //TODO:
     pub fn get_ports_values(&self) -> [i32; 4] {
         [0, 0, 0, 0]
@@ -221,6 +225,9 @@ impl VirtualMachine {
         self.acc = 0;
         self.flag = Flag::EQUAL;
         self.r.iter_mut().for_each(|item| *item = 0);
+        if self.stack_present {
+            self.stack.clear();
+        }
     }
     /// Connects vm with connection to shared data across threads
     ///

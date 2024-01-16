@@ -81,7 +81,7 @@ impl Ram {
             Port::Disconnected(v) => *v,
         };
 
-        self.data_port = Port::Disconnected(value);
+        self.mode_port = Port::Disconnected(value);
     }
 
     //
