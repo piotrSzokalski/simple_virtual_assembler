@@ -172,7 +172,10 @@ impl Assembler {
     /// * 'name' &str - name of label
     /// * 'line' usize - line number
     fn parse_label(&mut self, name: &str, line: usize) -> Result<Instruction, ParsingError> {
-        Ok(Instruction::new_label(name[0..name.len() - 1].to_string()))
+        Ok(Instruction::new_label(
+            name[0..name.len() - 1].to_string(),
+            line,
+        ))
     }
 
     fn parse_instruction(

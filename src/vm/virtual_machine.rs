@@ -18,6 +18,7 @@ use crate::vm::{
     opcodes::{JMPCondition, Opcode},
 };
 
+use super::instruction;
 use super::operand::{self, Operand};
 
 /// Status of vm
@@ -86,7 +87,7 @@ impl VirtualMachine {
     ///
     /// ### Returns
     pub fn new_with_program(program: Vec<Instruction>) -> VirtualMachine {
-        VirtualMachine {
+       let mut vm = VirtualMachine {
             pc: 0,
             acc: 0,
             flag: Flag::EQUAL,
@@ -100,7 +101,9 @@ impl VirtualMachine {
             stack_present: false,
             stack_size: 0,
             stack: Vec::new(),
-        }
+        };
+        vm.set_labels();
+        vm
     }
 
     pub fn with_stack(mut self, size: usize) -> VirtualMachine {
@@ -113,6 +116,15 @@ impl VirtualMachine {
     pub fn load_program(&mut self, program: Vec<Instruction>) {
         self.labels.clear();
         self.program = program;
+        self.set_labels();
+    }
+
+    pub fn set_labels(&mut self) {
+        for instruction in &self.program {
+            if let Instruction::Label(name, line) = instruction {
+                self.labels.insert(name.clone(), *line);
+            }
+        }
     }
 
     pub fn set_delay(&mut self, delay_ms: u32) {
@@ -143,9 +155,7 @@ impl VirtualMachine {
         self.p.clone()
     }
 
-    pub fn get_ports_ref(&self)  {
-
-    }
+    pub fn get_ports_ref(&self) {}
 
     //TODO:
     pub fn get_ports_values(&self) -> [i32; 4] {
@@ -269,14 +279,14 @@ impl VirtualMachine {
             Port::Disconnected(value) => *value,
         };
 
-        let id =self.p[index].get_id();
+        let id = self.p[index].get_id();
         if let Some(id) = id {
-            let id = format!("{}P{}",id, index);
+            let id = format!("{}P{}", id, index);
             connection.remove_port_id(id);
         }
 
         self.p[index] = Port::Disconnected(value);
-    }   
+    }
 
     //________________________________________________--
 
@@ -522,7 +532,8 @@ impl VirtualMachine {
                 Opcode::PSH(operand) => self.push_to_stack(operand),
                 Opcode::POP(operand) => self.pop_from_stack(operand),
             },
-            Instruction::Label(name) => self.add_label(name),
+            Instruction::Label(_, _) => {},
+           
         }
 
         true
@@ -652,8 +663,6 @@ impl fmt::Display for VirtualMachine {
 mod tests {
 
     use std::vec;
-
-    
 
     use super::*;
 
@@ -908,7 +917,7 @@ mod tests {
                 Operand::IntegerValue(0),
                 Operand::GeneralRegister(2),
             )),
-            Instruction::new_label("loop".to_string()),
+            Instruction::new_label("loop".to_string(), 3),
             Instruction::new(Opcode::MOV(Operand::GeneralRegister(0), Operand::ACC)),
             Instruction::new(Opcode::SUB(Operand::GeneralRegister(1))),
             Instruction::new(Opcode::MOV(Operand::ACC, Operand::GeneralRegister(0))),

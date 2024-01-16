@@ -4,7 +4,7 @@ use crate::vm::opcodes::Opcode;
 #[derive(PartialEq, Eq, Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub enum Instruction {
     Opcode(Opcode),
-    Label(String),
+    Label(String, usize),
 }
 
 impl Instruction {
@@ -12,14 +12,14 @@ impl Instruction {
         Instruction::Opcode(opcode)
     }
 
-    pub fn new_label(name: String) -> Instruction {
-        Instruction::Label(name)
+    pub fn new_label(name: String, line: usize) -> Instruction {
+        Instruction::Label(name, line)
     }
 
     pub fn get_opcode(&self) -> Option<Opcode> {
         match self {
             Instruction::Opcode(opcode) => Some(opcode.clone()),
-            Instruction::Label(_) => None,
+            Instruction::Label(_, _) => None,
         }
     }
 }
