@@ -1,6 +1,6 @@
 use std::usize;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::value};
 
 use super::{
     connection::{self, Connection},
@@ -150,6 +150,14 @@ impl Ram {
 
     pub fn get_data_ref(&mut self) -> &Vec<i32> {
         &self.data
+    }
+
+    /// Sets element on index to value
+    pub fn set_value(&mut self, index: usize, value: i32) {
+        if index >= self.data.len() {
+            return;
+        }
+        self.data[index] = value;
     }
 
     pub fn refresh(&mut self) {
