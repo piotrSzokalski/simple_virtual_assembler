@@ -517,8 +517,8 @@ impl VirtualMachine {
                 Opcode::XOR(operand) => self.apply_operation(operand, |a, b| a ^ b),
                 Opcode::AND(operand) => self.apply_operation(operand, |a, b| a & b),
                 Opcode::NOT => self.acc = !self.acc,
-                Opcode::SHL(operand) => self.apply_operation(operand, |a, b| a << b),
-                Opcode::SHR(operand) => self.apply_operation(operand, |a, b| a >> b),
+                Opcode::SHL(operand) => self.apply_operation(operand, |a, b| a.wrapping_shl(b.try_into().unwrap_or(0)) ),
+                Opcode::SHR(operand) => self.apply_operation(operand, |a, b| a.wrapping_shr(b.try_into().unwrap_or(0)) ),
 
                 // ------------ Jumping logic ------------
                 Opcode::CMP(operand1, operand2) => self.compare(operand1, operand2),
