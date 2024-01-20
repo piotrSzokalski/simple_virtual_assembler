@@ -930,12 +930,6 @@ mod tests {
         ];
         let mut vm = VirtualMachine::new_with_program(program);
         vm.run();
-        // println!("______________________________");
-
-        // println!("{:?}", vm);
-        // println!("______________________________");
-
-        // println!("{:?}", vm.r[2]);
 
         assert_eq!(vm.r[2], 4);
     }
@@ -972,7 +966,7 @@ mod tests {
         let mut vm = VirtualMachine::new_with_program(program);
 
         vm.run();
-
-        println!("{}", vm);
+        assert_eq!(vm.get_acc(), 20);
+        //println!("{}", vm);
     }
 }

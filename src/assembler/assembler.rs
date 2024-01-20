@@ -283,7 +283,6 @@ impl Assembler {
                     }
                 }
 
-
                 label if label.ends_with(':') => self.parse_label(label, current_line_number),
                 _ => Err(ParsingError::new(
                     ParsingError::Unknown,
@@ -314,10 +313,6 @@ impl Assembler {
                 line,
                 "".to_string(),
             ));
-            // return Err(ParsingError::new(ParsingError::
-            //     "Binary instructions requires exactly 2 operands",
-            //     line,
-            // ));
         }
         let (ro1, ro2) = register_only;
         let operand1 = self.parse_operand(operands[0], line, ro1)?;
@@ -444,10 +439,10 @@ mod test {
 
         assert!(result.is_err());
 
-        let err = result.unwrap_err();
-        println!("____________________________________");
-        println!("{}", err);
-        println!("____________________________________");
+        // let err = result.unwrap_err();
+        // println!("____________________________________");
+        // println!("{}", err);
+        // println!("____________________________________");
 
         //assert_eq!(err.get_message(), "Empty Program")
     }
@@ -554,7 +549,7 @@ mod test {
 
         assert!(result.is_err());
 
-        let err = result.unwrap_err();
+       // let err = result.unwrap_err();
 
         //println!("{}", err);
     }
@@ -571,7 +566,7 @@ mod test {
 
         assert!(result.is_err());
 
-        let err = result.unwrap_err();
+        //let err = result.unwrap_err();
 
         //println!("{}", err);
     }
@@ -587,12 +582,12 @@ mod test {
         let mut assembler = Assembler::new();
 
         let result = assembler.parse(program_text);
-
-        println!("________________________________________________---");
-        match result {
-            Ok(v) => println!("{:?}", v),
-            Err(e) => println!("{:?}", e),
-        }
+        assert!(result.is_ok());
+        // println!("________________________________________________---");
+        // match result {
+        //     Ok(v) => println!("{:?}", v),
+        //     Err(e) => println!("{:?}", e),
+        // }
     }
 
     #[test]
@@ -609,12 +604,12 @@ mod test {
         let mut assembler = Assembler::new();
 
         let result = assembler.parse(program_text);
-
-        println!("________________________________________________---");
-        match result {
-            Ok(v) => println!("{:?}", v),
-            Err(e) => println!("{:?}", e),
-        }
+        assert!(result.is_ok());
+        // println!("________________________________________________---");
+        // match result {
+        //     Ok(v) => println!("{:?}", v),
+        //     Err(e) => println!("{:?}", e),
+        // }
     }
 
     #[test]
@@ -632,11 +627,11 @@ mod test {
 
         let result = assembler.parse(program_text);
         assert!(result.is_ok());
-        println!("________________________________________________---");
-        match result {
-            Ok(v) => println!("{:?}", v),
-            Err(e) => println!("{:?}", e),
-        }
+        // println!("________________________________________________---");
+        // match result {
+        //     Ok(v) => println!("{:?}", v),
+        //     Err(e) => println!("{:?}", e),
+        // }
     }
 
     #[test]
@@ -655,11 +650,11 @@ mod test {
 
         let result = assembler.parse(program_text);
         assert!(result.is_ok());
-        println!("________________________________________________---");
-        match result {
-            Ok(v) => println!("{:?}", v),
-            Err(e) => println!("{:?}", e),
-        }
+        // println!("________________________________________________---");
+        // match result {
+        //     Ok(v) => println!("{:?}", v),
+        //     Err(e) => println!("{:?}", e),
+        // }
     }
 
     #[test]
@@ -678,11 +673,11 @@ mod test {
 
         let result = assembler.parse(program_text);
         assert!(result.is_ok());
-        println!("________________________________________________---");
-        match result {
-            Ok(v) => println!("{:?}", v),
-            Err(e) => println!("{:?}", e),
-        }
+        // println!("________________________________________________---");
+        // match result {
+        //     Ok(v) => println!("{:?}", v),
+        //     Err(e) => println!("{:?}", e),
+        // }
     }
 
     #[test]
@@ -716,10 +711,10 @@ mod test {
 
         let result = assembler.parse(program_text);
         assert!(result.is_ok());
-        println!("________________________________________________---");
-        match result {
-            Ok(v) => println!("{:?}", v),
-            Err(e) => println!("{:?}", e),
-        }
+        // println!("________________________________________________---");
+        // match result {
+        //     Ok(v) => println!("{:?}", v),
+        //     Err(e) => println!("{:?}", e),
+        // }
     }
 }
