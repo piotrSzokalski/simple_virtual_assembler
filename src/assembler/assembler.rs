@@ -326,9 +326,16 @@ impl Assembler {
         operands: &[&str],
         line: usize,
     ) -> Result<Instruction, ParsingError> {
-        if operands.len() != 1 {
+        if operands.len() > 1 {
             return Err(ParsingError::new(
                 ParsingError::TooManyOperands,
+                line,
+                "".to_string(),
+            ));
+        }
+        if operands.len() < 1 {
+            return Err(ParsingError::new(
+                ParsingError::NotEnoughOperands,
                 line,
                 "".to_string(),
             ));
