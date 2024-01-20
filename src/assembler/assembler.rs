@@ -283,9 +283,7 @@ impl Assembler {
                     }
                 }
 
-                "SLP" | "slp" => {
-                    self.parse_unary_instruction(Opcode::SLP, operands, current_line_number)
-                }
+
                 label if label.ends_with(':') => self.parse_label(label, current_line_number),
                 _ => Err(ParsingError::new(
                     ParsingError::Unknown,

@@ -14,13 +14,10 @@ pub enum JMPCondition {
 #[derive(Debug, PartialEq, Eq, Clone, serde::Deserialize, serde::Serialize)]
 pub enum Opcode {
     // ------------ Control instructions ------------
-
     /// Do nothing
     NOP,
     /// Halt execution
     HLT,
-    /// Sleeps vm for given amount of milliseconds
-    SLP(Operand),
 
     // ------------ Moving operations ------------
     /// Copy value of first argument ot second
@@ -44,7 +41,6 @@ pub enum Opcode {
     DEC,
 
     // ------------  Bit operations ------------
-
     /// ANDx operand with  acc
     AND(Operand),
     /// ORx operand with acc
@@ -59,7 +55,6 @@ pub enum Opcode {
     SHR(Operand),
 
     // ------------ Jumping logic ------------
-
     /// Compare
     CMP(Operand, Operand),
     /// Jum to label
@@ -74,7 +69,6 @@ pub enum Opcode {
     JG(String),
 
     // ------------ Stack ------------
-
     /// Copies operand to stack
     PSH(Operand),
     /// Pops form a stack

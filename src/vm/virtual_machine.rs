@@ -499,7 +499,6 @@ impl VirtualMachine {
                     return false;
                 }
                 Opcode::NOP => {}
-                Opcode::SLP(duration) => self.sleep(duration),
                 // ------------ Moving operations ------------
                 Opcode::MOV(operand1, operand2) => self.move_operand(operand1, operand2),
 
@@ -574,9 +573,7 @@ impl VirtualMachine {
 
                         delay = vm.get_delay();
 
-                        //FIXME:
-                        // causes deadlock
-                        //vm.delay(delay);
+                      
                     }
                 }
                 VirtualMachine::delay(delay)
