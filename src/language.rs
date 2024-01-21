@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 /// Available languages
-#[derive(PartialEq, serde::Deserialize, serde::Serialize)]
+#[derive(PartialEq, serde::Deserialize, serde::Serialize, Clone)]
 pub enum Language {
     /// Polish
     Pl,
