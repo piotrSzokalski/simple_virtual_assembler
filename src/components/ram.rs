@@ -128,6 +128,11 @@ impl Ram {
         self.data_port = Port::Disconnected(value);
     }
 
+    /// Sets all values to 0
+    pub fn zero_data(&mut self) {
+        self.data.iter_mut().for_each(|value| *value = 0);
+    }
+
     pub fn get_index_port_ref(&mut self) -> &mut Port {
         &mut self.index_port
     }
