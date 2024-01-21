@@ -93,14 +93,14 @@ impl Connection {
     /// # Arguments
     ///
     /// * id String - arbitrary name used to identify connected port
-    pub fn get_connected_vms_and_ports(&mut self, delimiter: char) -> Vec<(i32, usize)> {
-        let x: Vec<(i32, usize)> = self
+    pub fn get_connected_vms_and_ports(&mut self, delimiter: char) -> Vec<(usize, usize)> {
+        let x: Vec<(usize, usize)> = self
             .ports
             .iter()
             .filter(|id| !id.starts_with("R"))
             .map(|id| {
                 let split = id.split(delimiter).collect::<Vec<&str>>();
-                let vm_id = split[0].parse::<i32>().unwrap();
+                let vm_id = split[0].parse::<usize>().unwrap();
                 let port_index = split[1].parse::<usize>().unwrap();
                 (vm_id, port_index)
             })
