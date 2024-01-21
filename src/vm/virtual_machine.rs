@@ -41,7 +41,7 @@ pub struct VirtualMachine {
     /// General purpose registers
     pub r: [i32; 4],
     /// Ports - registers used for I/O
-    p: [Port; 4],
+    p: [Port; 6],
     /// Labels used for jumps
     labels: HashMap<String, usize>,
     /// Vector of instructions to be executed
@@ -68,7 +68,14 @@ impl VirtualMachine {
             flag: Flag::EQUAL,
             r: [0; 4],
             //TODO:
-            p: [Port::new(0), Port::new(0), Port::new(0), Port::new(0)],
+            p: [
+                Port::new(0),
+                Port::new(0),
+                Port::new(0),
+                Port::new(0),
+                Port::new(0),
+                Port::new(0),
+            ],
 
             labels: HashMap::new(),
             program: Vec::new(),
@@ -87,13 +94,20 @@ impl VirtualMachine {
     ///
     /// ### Returns
     pub fn new_with_program(program: Vec<Instruction>) -> VirtualMachine {
-       let mut vm = VirtualMachine {
+        let mut vm = VirtualMachine {
             pc: 0,
             acc: 0,
             flag: Flag::EQUAL,
             r: [0; 4],
             //TODO:
-            p: [Port::new(0), Port::new(0), Port::new(0), Port::new(0)],
+            p: [
+                Port::new(0),
+                Port::new(0),
+                Port::new(0),
+                Port::new(0),
+                Port::new(0),
+                Port::new(0),
+            ],
             program,
             labels: HashMap::new(),
             status: VmStatus::Initial,
@@ -151,7 +165,7 @@ impl VirtualMachine {
         self.r
     }
 
-    pub fn get_ports(&self) -> [Port; 4] {
+    pub fn get_ports(&self) -> [Port; 6] {
         self.p.clone()
     }
 
@@ -163,7 +177,7 @@ impl VirtualMachine {
     }
 
     /// Gets state of all register (acc, pc, flag, r, p)
-    pub fn get_registers_all(&self) -> (i32, usize, Flag, [i32; 4], [Port; 4]) {
+    pub fn get_registers_all(&self) -> (i32, usize, Flag, [i32; 4], [Port; 6]) {
         (self.acc, self.pc, self.flag, self.r, self.p.clone())
     }
 
@@ -191,7 +205,7 @@ impl VirtualMachine {
         usize,
         Flag,
         [i32; 4],
-        [Port; 4],
+        [Port; 6],
         HashMap<String, usize>,
         Vec<Instruction>,
     ) {
@@ -206,8 +220,8 @@ impl VirtualMachine {
         )
     }
 
-    pub fn get_state_for_display(&self) -> (i32, usize, Flag, [i32; 4], [i32; 4], VmStatus, u32) {
-        let mut port_values: [i32; 4] = [0, 0, 0, 0];
+    pub fn get_state_for_display(&self) -> (i32, usize, Flag, [i32; 4], [i32; 6], VmStatus, u32) {
+        let mut port_values: [i32; 6] = [0; 6];
         for (i, p) in self.p.iter().enumerate() {
             port_values[i] = p.clone().get();
         }
@@ -493,46 +507,49 @@ impl VirtualMachine {
         let instruction = self.fetch();
 
         match instruction {
-            Instruction::Opcode(opcode) => match opcode {
-                // ------------ Control instructions ------------
-                Opcode::HLT => {
-                    return false;
+            Instruction::Opcode(opcode) => {
+                match opcode {
+                    // ------------ Control instructions ------------
+                    Opcode::HLT => {
+                        return false;
+                    }
+                    Opcode::NOP => {}
+                    // ------------ Moving operations ------------
+                    Opcode::MOV(operand1, operand2) => self.move_operand(operand1, operand2),
+
+                    // ------------  Arithmetic operations ------------
+                    Opcode::ADD(operand) => self.apply_operation(operand, |a, b| a.wrapping_add(b)),
+                    Opcode::SUB(operand) => self.apply_operation(operand, |a, b| a.wrapping_sub(b)),
+                    Opcode::MUL(operand) => self.apply_operation(operand, |a, b| a.wrapping_mul(b)),
+                    Opcode::DIV(operand) => self.apply_operation(operand, |a, b| a.wrapping_div(b)),
+                    Opcode::MOD(operand) => self.apply_operation(operand, |a, b| a.wrapping_rem(b)),
+                    Opcode::INC => self.acc = self.acc.wrapping_add(1),
+                    Opcode::DEC => self.acc = self.acc.wrapping_sub(1),
+
+                    // ------------  Bit operations ------------
+                    Opcode::OR(operand) => self.apply_operation(operand, |a, b| a | b),
+                    Opcode::XOR(operand) => self.apply_operation(operand, |a, b| a ^ b),
+                    Opcode::AND(operand) => self.apply_operation(operand, |a, b| a & b),
+                    Opcode::NOT => self.acc = !self.acc,
+                    Opcode::SHL(operand) => self
+                        .apply_operation(operand, |a, b| a.wrapping_shl(b.try_into().unwrap_or(0))),
+                    Opcode::SHR(operand) => self
+                        .apply_operation(operand, |a, b| a.wrapping_shr(b.try_into().unwrap_or(0))),
+
+                    // ------------ Jumping logic ------------
+                    Opcode::CMP(operand1, operand2) => self.compare(operand1, operand2),
+                    Opcode::JE(name) => self.jump_to_label(&name, JMPCondition::EQ),
+                    Opcode::JL(name) => self.jump_to_label(&name, JMPCondition::LST),
+                    Opcode::JG(name) => self.jump_to_label(&name, JMPCondition::GRT),
+                    Opcode::JMP(name) => self.jump_to_label(&name, JMPCondition::NONE),
+
+                    Opcode::JNE(name) => self.jump_to_label(&name, JMPCondition::NEQ),
+                    // ------------ Stack operations ------------
+                    Opcode::PSH(operand) => self.push_to_stack(operand),
+                    Opcode::POP(operand) => self.pop_from_stack(operand),
                 }
-                Opcode::NOP => {}
-                // ------------ Moving operations ------------
-                Opcode::MOV(operand1, operand2) => self.move_operand(operand1, operand2),
-
-                // ------------  Arithmetic operations ------------
-                Opcode::ADD(operand) => self.apply_operation(operand, |a, b| a.wrapping_add(b)),
-                Opcode::SUB(operand) => self.apply_operation(operand, |a, b| a.wrapping_sub(b)),
-                Opcode::MUL(operand) => self.apply_operation(operand, |a, b| a.wrapping_mul(b)),
-                Opcode::DIV(operand) => self.apply_operation(operand, |a, b| a.wrapping_div(b)),
-                Opcode::MOD(operand) => self.apply_operation(operand, |a, b| a.wrapping_rem(b)),
-                Opcode::INC => self.acc = self.acc.wrapping_add(1),
-                Opcode::DEC => self.acc = self.acc.wrapping_sub(1),
-
-                // ------------  Bit operations ------------
-                Opcode::OR(operand) => self.apply_operation(operand, |a, b| a | b),
-                Opcode::XOR(operand) => self.apply_operation(operand, |a, b| a ^ b),
-                Opcode::AND(operand) => self.apply_operation(operand, |a, b| a & b),
-                Opcode::NOT => self.acc = !self.acc,
-                Opcode::SHL(operand) => self.apply_operation(operand, |a, b| a.wrapping_shl(b.try_into().unwrap_or(0)) ),
-                Opcode::SHR(operand) => self.apply_operation(operand, |a, b| a.wrapping_shr(b.try_into().unwrap_or(0)) ),
-
-                // ------------ Jumping logic ------------
-                Opcode::CMP(operand1, operand2) => self.compare(operand1, operand2),
-                Opcode::JE(name) => self.jump_to_label(&name, JMPCondition::EQ),
-                Opcode::JL(name) => self.jump_to_label(&name, JMPCondition::LST),
-                Opcode::JG(name) => self.jump_to_label(&name, JMPCondition::GRT),
-                Opcode::JMP(name) => self.jump_to_label(&name, JMPCondition::NONE),
-
-                Opcode::JNE(name) => self.jump_to_label(&name, JMPCondition::NEQ),
-                // ------------ Stack operations ------------
-                Opcode::PSH(operand) => self.push_to_stack(operand),
-                Opcode::POP(operand) => self.pop_from_stack(operand),
-            },
-            Instruction::Label(_, _) => {},
-           
+            }
+            Instruction::Label(_, _) => {}
         }
 
         true
@@ -572,8 +589,6 @@ impl VirtualMachine {
                         running = vm.execute();
 
                         delay = vm.get_delay();
-
-                      
                     }
                 }
                 VirtualMachine::delay(delay)

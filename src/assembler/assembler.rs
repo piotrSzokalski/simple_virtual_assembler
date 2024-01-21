@@ -65,7 +65,7 @@ impl Assembler {
             }
             p if p.starts_with('p') => {
                 if let Ok(index) = remaining_text.parse::<usize>() {
-                    if index > 3 {
+                    if index > 5 {
                         return Err(ParsingError::new(
                             ParsingError::InvalidPortNumber,
                             line,
@@ -414,7 +414,9 @@ mod test {
 
         for register in registers.iter() {
             let result = assembler.parse_operand(&register, 0, false);
-
+            println!("_______________");
+            println!("{:?}", result);
+            println!("_______________");
             assert!(result.is_err());
         }
     }
@@ -535,7 +537,7 @@ mod test {
         let program_text = r#"
             SUB 10
             SUB r1
-            SUB p4
+            SUB p6
         "#;
 
         let mut assembler = Assembler::new();
