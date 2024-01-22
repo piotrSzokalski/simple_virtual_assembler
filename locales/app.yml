@@ -4,7 +4,7 @@ error.parsing:
   pl: Błąd parsowania na lini
 error.empty_operand:
   en: Empty operand
-  pl: Pusta operanda
+  pl: Pusty operanda
 error.invalid_port_number:
   en: Invalid port number
   pl: Nieprawidłowy numer portu
@@ -15,17 +15,17 @@ error.invalid_operand_type:
   en: Invalid operand type
   pl: Nieprawidłowy typ operanda
 error.invalid_numeric_literal:
-  en: Invalid numeric literal
+  en: Invalid numeric literał
   pl: Nieprawidłowa liczba literalna
 error.invalid_binary_literal:
-  en: Invalid binary literal
-  pl: Nieprawidłowy literal binarny
+  en: Invalid binary literał
+  pl: Nieprawidłowy literał binarny
 error.invalid_hex_literal:
-  en: Invalid hex literal
-  pl: Nieprawidłowy literal heksadecymalny
+  en: Invalid hex literał
+  pl: Nieprawidłowy literał heksadecymalny
 error.empty:
-  en: Empty
-  pl: Pusty
+  en: Empty program
+  pl: Pusty program
 error.unknown:
   en: Unknown
   pl: Nieznany
