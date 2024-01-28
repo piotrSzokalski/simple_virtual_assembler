@@ -192,7 +192,7 @@ fn test_vm_start_delayed() {
     let program = assembler.parse(code).unwrap();
 
     let mut vm = VirtualMachine::new_with_program(program);
-    vm.set_delay(200);
+    vm.set_delay(20);
     let vm = Arc::new(Mutex::new(vm));
     //vm.lock().unwrap().set_delay(2000);
     let vm_copy = vm.clone();
