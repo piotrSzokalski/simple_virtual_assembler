@@ -197,6 +197,10 @@ impl VirtualMachine {
         self.stack.clone()
     }
 
+    pub fn get_next_instruction(&self) -> Option<Instruction> {
+        self.program.get(self.pc).cloned()
+    }
+
     /// Gets full state of virtual machine (acc, pc, flag, r, p, labels, program)
     pub fn get_state_full_old(
         &self,

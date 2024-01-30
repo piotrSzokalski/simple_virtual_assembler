@@ -1,5 +1,7 @@
 use crate::vm::opcodes::Opcode;
 
+use std::fmt::{self, write, Display, Formatter, Result};
+
 /// Represents instruction in SVA, either an opcode or label
 #[derive(PartialEq, Eq, Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub enum Instruction {
@@ -24,3 +26,11 @@ impl Instruction {
     }
 }
 
+impl fmt::Display for Instruction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        match self {
+            Instruction::Opcode(opcode) => write!(f, "{}", opcode),
+            Instruction::Label(name, line) => write!(f, "{}({})", name, line),
+        }
+    }
+}
