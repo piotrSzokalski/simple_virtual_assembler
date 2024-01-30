@@ -589,6 +589,8 @@ impl VirtualMachine {
                         running = vm.execute();
 
                         delay = vm.get_delay();
+                    } else if vm.status == VmStatus::Finished {
+                        break;
                     }
                 }
                 VirtualMachine::delay(delay)
