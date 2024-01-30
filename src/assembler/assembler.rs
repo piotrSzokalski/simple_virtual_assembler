@@ -2,6 +2,8 @@ use std::error;
 use std::fmt;
 use std::ops::IndexMut;
 
+use serde::de::value;
+
 use super::super::language::Language;
 
 use crate::vm::{instruction::Instruction, opcodes::Opcode, operand::Operand};
@@ -133,6 +135,23 @@ impl Assembler {
                 }
                 return Err(ParsingError::new(
                     ParsingError::InvalidHexLiteral,
+                    line,
+                    "".to_string(),
+                ));
+            }
+            c if c.len() == 3 && c.starts_with('\'') && c.ends_with('\'') => {
+                if register_only {
+                    return Err(ParsingError::new(
+                        ParsingError::InvalidCharLiteral,
+                        line,
+                        "".to_string(),
+                    ));
+                }
+                if let Some(value) = &c.chars().nth(1) {
+                    return Ok(Operand::IntegerValue(*value as i32));
+                }
+                return Err(ParsingError::new(
+                    ParsingError::InvalidCharLiteral,
                     line,
                     "".to_string(),
                 ));
@@ -558,7 +577,7 @@ mod test {
 
         assert!(result.is_err());
 
-       // let err = result.unwrap_err();
+        // let err = result.unwrap_err();
 
         //println!("{}", err);
     }

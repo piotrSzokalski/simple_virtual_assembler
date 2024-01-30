@@ -30,6 +30,7 @@ pub enum ParsingError {
     InvalidNumericLiteral(ParsingErrorData),
     InvalidBinaryLiteral(ParsingErrorData),
     InvalidHexLiteral(ParsingErrorData),
+    InvalidCharLiteral(ParsingErrorData),
     Empty(ParsingErrorData),
     NoSuchInstruction(ParsingErrorData),
     NotImplanted(ParsingErrorData),
@@ -62,6 +63,7 @@ impl ParsingError {
             ParsingError::NotEnoughOperands(data) => data.clone(),
             ParsingError::TooManyOperands(data) => data.clone(),
             ParsingError::StackNotPresent(data) => data.clone(),
+            ParsingError::InvalidCharLiteral(data) => data.clone(),
         }
     }
 
@@ -81,11 +83,12 @@ impl fmt::Display for ParsingError {
             ParsingError::InvalidBinaryLiteral(_) => t!("error.invalid_binary_literal"),
             ParsingError::InvalidHexLiteral(_) => t!("error.invalid_hex_literal"),
             ParsingError::Empty(_) => t!("error.empty"),
-            ParsingError::NoSuchInstruction(_) => t!("error.unknown"),
+            ParsingError::NoSuchInstruction(_) => t!("error.no_such_instruction"),
             ParsingError::NotImplanted(_) => t!("error.not_implanted"),
             ParsingError::NotEnoughOperands(_) => t!("error.not_enough_operands"),
             ParsingError::TooManyOperands(_) => t!("error.too_many_operands"),
             ParsingError::StackNotPresent(_) => t!("error.stack_not_present"),
+            ParsingError::InvalidCharLiteral(_) =>  t!("error.invalid_char_literal"),
         };
 
         let error_data = self.get_data();

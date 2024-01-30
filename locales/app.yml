@@ -23,6 +23,9 @@ error.invalid_binary_literal:
 error.invalid_hex_literal:
   en: Invalid hex literał
   pl: Nieprawidłowy literał heksadecymalny
+error.invalid_char_literal:
+  en: Invalid char literal
+  pl: Nieoprawny literał znakowy
 error.empty:
   en: Empty program
   pl: Pusty program
