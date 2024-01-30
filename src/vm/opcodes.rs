@@ -82,7 +82,7 @@ impl Display for Opcode {
         match self {
             Opcode::NOP => write!(f, "NOP"),
             Opcode::HLT => write!(f, "HLT"),
-            Opcode::MOV(op1, op2) => write!(f, "MOV {}, {}", op1, op2),
+            Opcode::MOV(op1, op2) => write!(f, "MOV {} {}", op1, op2),
             Opcode::ADD(op) => write!(f, "ADD {}", op),
             Opcode::SUB(op) => write!(f, "SUB {}", op),
             Opcode::MUL(op) => write!(f, "MUL {}", op),
@@ -96,7 +96,7 @@ impl Display for Opcode {
             Opcode::NOT => write!(f, "NOT"),
             Opcode::SHL(op) => write!(f, "SHL {}", op),
             Opcode::SHR(op) => write!(f, "SHR {}", op),
-            Opcode::CMP(op1, op2) => write!(f, "CMP {}, {}", op1, op2),
+            Opcode::CMP(op1, op2) => write!(f, "CMP {} {}", op1, op2),
             Opcode::JMP(label) => write!(f, "JMP {}", label),
             Opcode::JE(label) => write!(f, "JE {}", label),
             Opcode::JNE(label) => write!(f, "JNE {}", label),
