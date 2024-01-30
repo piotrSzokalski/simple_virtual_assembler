@@ -4,7 +4,7 @@ error.parsing:
   pl: Błąd parsowania na lini
 error.empty_operand:
   en: Empty operand
-  pl: Pusty operanda
+  pl: Pusty operand
 error.invalid_port_number:
   en: Invalid port number
   pl: Nieprawidłowy numer portu
@@ -13,7 +13,7 @@ error.invalid_register_number:
   pl: Nieprawidłowy numer rejestru
 error.invalid_operand_type:
   en: Invalid operand type
-  pl: Nieprawidłowy typ operanda
+  pl: Nieprawidłowy typ operandu
 error.invalid_numeric_literal:
   en: Invalid numeric literał
   pl: Nieprawidłowa liczba literalna
@@ -26,9 +26,9 @@ error.invalid_hex_literal:
 error.empty:
   en: Empty program
   pl: Pusty program
-error.unknown:
-  en: Unknown
-  pl: Nieznany
+error.no_such_instruction:
+  en: No such instruction
+  pl: Niema takiej instrukcji 
 error.not_implanted:
   en: Not implemented
   pl: Niezaimplementowane

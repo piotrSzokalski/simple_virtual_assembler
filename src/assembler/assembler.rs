@@ -285,7 +285,7 @@ impl Assembler {
 
                 label if label.ends_with(':') => self.parse_label(label, current_line_number),
                 _ => Err(ParsingError::new(
-                    ParsingError::Unknown,
+                    ParsingError::NoSuchInstruction,
                     current_line_number,
                     "".to_string(),
                 )),
