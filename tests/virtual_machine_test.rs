@@ -1,10 +1,8 @@
 extern crate simple_virtual_assembler;
 
-
 use simple_virtual_assembler::assembler::assembler::Assembler;
 use simple_virtual_assembler::assembler::parsing_err::ParsingError;
 use simple_virtual_assembler::vm;
-
 
 use simple_virtual_assembler::vm::virtual_machine::VirtualMachine;
 
@@ -19,6 +17,7 @@ fn assembler_and_run(program_text: &str) -> Result<VirtualMachine, ParsingError>
     Ok(vm)
 }
 
+#[allow(dead_code)]
 /// Parses and runs program on vm, displays vm state between each instruction
 fn assembler_and_with_prints(program_text: &str) -> Result<VirtualMachine, ParsingError> {
     let program = Assembler::new().parse(program_text)?;
@@ -146,8 +145,8 @@ fn test_stack() {
     pop r3
     HLT
     "#;
-    
-    let mut assembler= Assembler::new().with_stack();
+
+    let mut assembler = Assembler::new().with_stack();
     let result = assembler.parse(program_text);
     match result {
         Ok(program) => {
@@ -158,6 +157,4 @@ fn test_stack() {
         }
         Err(err) => println!("{}", err),
     };
-    
-
 }

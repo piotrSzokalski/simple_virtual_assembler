@@ -18,7 +18,7 @@ impl Port {
 
     pub fn get_id(&self) -> Option<usize> {
         match self {
-            Port::Connected(_, id) => id.clone(),
+            Port::Connected(_, id) => *id,
             Port::Disconnected(_) => None,
         }
     }
@@ -62,12 +62,11 @@ impl PartialEq for Port {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Connected(l, _), Self::Connected(r, _)) => {
-                l.lock().unwrap().clone() == r.lock().unwrap().clone()
+                *l.lock().unwrap() == *r.lock().unwrap()
             }
             (Self::Disconnected(l), Self::Disconnected(r)) => *l == *r,
-            (Self::Connected(l, _), Self::Disconnected(r)) => l.lock().unwrap().clone() == *r,
-            (Self::Disconnected(l), Self::Connected(r, _)) => *l == r.lock().unwrap().clone(),
-            _ => false,
+            (Self::Connected(l, _), Self::Disconnected(r)) => *l.lock().unwrap() == *r,
+            (Self::Disconnected(l), Self::Connected(r, _)) => *l == *r.lock().unwrap(),
         }
     }
 }

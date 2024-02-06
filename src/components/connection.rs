@@ -13,6 +13,12 @@ pub struct Connection {
     id: Option<usize>,
 }
 
+impl Default for Connection {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Connection {
     pub fn new() -> Connection {
         Connection {
@@ -93,7 +99,7 @@ impl Connection {
         let x: Vec<(usize, usize)> = self
             .ports
             .iter()
-            .filter(|id| !id.starts_with("R"))
+            .filter(|id| !id.starts_with('R'))
             .map(|id| {
                 let split = id.split(delimiter).collect::<Vec<&str>>();
                 let vm_id = split[0].parse::<usize>().unwrap();
@@ -108,7 +114,7 @@ impl Connection {
         let x: Vec<(usize, usize)> = self
             .ports
             .iter()
-            .filter(|id| id.starts_with("R"))
+            .filter(|id| id.starts_with('R'))
             .map(|id| {
                 let split = id[1..].split(':').collect::<Vec<&str>>();
                 let ram_id = split[0].parse::<usize>().unwrap();
@@ -127,7 +133,6 @@ impl Connection {
 }
 
 mod test {
-    use crate::components::connection::Connection;
 
     #[test]
     fn test_getting_connected_vms_and_ports_list() {
@@ -135,7 +140,7 @@ mod test {
             "R0P0", "0P1", "0P2", "0P3", "1P0", "1P1", "1P2", "1P3", "1P3", //
             "10P3", "9993P3",
         ]);
-        let mut connection = Connection::new();
+        let mut connection = crate::components::connection::Connection::new();
         for id in port_ids.iter() {
             connection.add_port_id(id.to_string());
         }
@@ -154,7 +159,7 @@ mod test {
             "R999134:index",
             "R22:mode",
         ]);
-        let mut connection = Connection::new();
+        let mut connection = crate::components::connection::Connection::new();
         for id in port_ids.iter() {
             connection.add_port_id(id.to_string());
         }

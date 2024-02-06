@@ -196,7 +196,8 @@ fn test_vm_start_delayed() {
     let handle = VirtualMachine::start(vm);
 
     let mut done = false;
-    let mut acc = -1;
+
+    let mut acc: i32;
     while !done {
         println!("Reading data");
         {

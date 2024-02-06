@@ -8,6 +8,12 @@ use super::parsing_err::ParsingError;
 pub struct Assembler {
     stack_present: bool,
 }
+impl Default for Assembler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Assembler {
     pub fn new() -> Assembler {
         Assembler {
@@ -36,12 +42,8 @@ impl Assembler {
         let remaining_text = &operand_text[1..];
 
         match operand_text {
-            "acc" => {
-                return Ok(Operand::ACC);
-            }
-            "pc" => {
-                return Ok(Operand::PC);
-            }
+            "acc" => Ok(Operand::ACC),
+            "pc" => Ok(Operand::PC),
             r if r.starts_with('r') => {
                 if let Ok(index) = remaining_text.parse::<usize>() {
                     if index > 3 {
@@ -51,13 +53,13 @@ impl Assembler {
                             "".to_string(),
                         ));
                     }
-                    return Ok(Operand::GeneralRegister(index.try_into().unwrap()));
+                    return Ok(Operand::GeneralRegister(index));
                 }
-                return Err(ParsingError::new(
+                Err(ParsingError::new(
                     ParsingError::InvalidPortNumber,
                     line,
                     "".to_string(),
-                ));
+                ))
             }
             p if p.starts_with('p') => {
                 if let Ok(index) = remaining_text.parse::<usize>() {
@@ -68,13 +70,13 @@ impl Assembler {
                             "".to_string(),
                         ));
                     }
-                    return Ok(Operand::PortRegister(index.try_into().unwrap()));
+                    return Ok(Operand::PortRegister(index));
                 }
-                return Err(ParsingError::new(
+                Err(ParsingError::new(
                     ParsingError::InvalidPortNumber,
                     line,
                     "".to_string(),
-                ));
+                ))
             }
 
             decimal
@@ -92,11 +94,11 @@ impl Assembler {
                 if let Ok(decimal) = decimal.parse::<i32>() {
                     return Ok(Operand::IntegerValue(decimal));
                 }
-                return Err(ParsingError::new(
+                Err(ParsingError::new(
                     ParsingError::InvalidNumericLiteral,
                     line,
                     "".to_string(),
-                ));
+                ))
             }
             binary if binary.starts_with("0b") => {
                 if register_only {
@@ -109,11 +111,11 @@ impl Assembler {
                 if let Ok(binary) = i32::from_str_radix(&binary[2..], 2) {
                     return Ok(Operand::IntegerValue(binary));
                 }
-                return Err(ParsingError::new(
+                Err(ParsingError::new(
                     ParsingError::InvalidBinaryLiteral,
                     line,
                     "".to_string(),
-                ));
+                ))
             }
 
             hex if hex.starts_with("0x") => {
@@ -127,11 +129,11 @@ impl Assembler {
                 if let Ok(hex) = i32::from_str_radix(&hex[2..], 16) {
                     return Ok(Operand::IntegerValue(hex));
                 }
-                return Err(ParsingError::new(
+                Err(ParsingError::new(
                     ParsingError::InvalidHexLiteral,
                     line,
                     "".to_string(),
-                ));
+                ))
             }
             c if c.len() == 3 && c.starts_with('\'') && c.ends_with('\'') => {
                 if register_only {
@@ -144,20 +146,18 @@ impl Assembler {
                 if let Some(value) = &c.chars().nth(1) {
                     return Ok(Operand::IntegerValue(*value as i32));
                 }
-                return Err(ParsingError::new(
+                Err(ParsingError::new(
                     ParsingError::InvalidCharLiteral,
-                    line,
-                    "".to_string(),
-                ));
-            }
-
-            _ => {
-                return Err(ParsingError::new(
-                    ParsingError::InvalidOperandType,
                     line,
                     "".to_string(),
                 ))
             }
+
+            _ => Err(ParsingError::new(
+                ParsingError::InvalidOperandType,
+                line,
+                "".to_string(),
+            )),
         }
     }
 
@@ -172,7 +172,7 @@ impl Assembler {
             .lines()
             .enumerate()
             .filter(|(_, line)| !line.trim().is_empty())
-            .filter(|(_, line)| !line.trim().starts_with("#"))
+            .filter(|(_, line)| !line.trim().starts_with('#'))
             .map(|(current_line_number, line)| self.parse_instruction(line, current_line_number))
             .collect();
 
@@ -198,10 +198,11 @@ impl Assembler {
     ) -> Result<Instruction, ParsingError> {
         let line_without_comments: &str = line.split('#').next().unwrap_or("").trim();
         let words: Vec<&str> = line_without_comments.split_whitespace().collect();
-        if let Some(_instruction_word) = words.get(0) {
+        if let Some(_instruction_word) = words.first() {
             let operands = &words[1..];
             let instruction_word = words[0];
-            let instruction = match instruction_word {
+
+            match instruction_word {
                 "MOV" | "mov" => self.parse_binary_instruction(
                     Opcode::MOV,
                     operands,
@@ -265,32 +266,24 @@ impl Assembler {
 
                 "PHS" | "psh" => {
                     if self.stack_present {
-                        return self.parse_unary_instruction(
-                            Opcode::PSH,
-                            operands,
-                            current_line_number,
-                        );
+                        self.parse_unary_instruction(Opcode::PSH, operands, current_line_number)
                     } else {
-                        return Err(ParsingError::new(
+                        Err(ParsingError::new(
                             ParsingError::StackNotPresent,
                             current_line_number,
                             "stack not present".to_owned(),
-                        ));
+                        ))
                     }
                 }
                 "POP" | "pop" => {
                     if self.stack_present {
-                        return self.parse_unary_instruction(
-                            Opcode::POP,
-                            operands,
-                            current_line_number,
-                        );
+                        self.parse_unary_instruction(Opcode::POP, operands, current_line_number)
                     } else {
-                        return Err(ParsingError::new(
+                        Err(ParsingError::new(
                             ParsingError::StackNotPresent,
                             current_line_number,
                             "stack not present".to_owned(),
-                        ));
+                        ))
                     }
                 }
 
@@ -300,14 +293,13 @@ impl Assembler {
                     current_line_number,
                     "".to_string(),
                 )),
-            };
-            instruction
+            }
         } else {
-            return Err(ParsingError::new(
+            Err(ParsingError::new(
                 ParsingError::Empty,
                 current_line_number,
                 "FIXME".to_string(),
-            ));
+            ))
         }
     }
 
@@ -344,7 +336,7 @@ impl Assembler {
                 "".to_string(),
             ));
         }
-        if operands.len() < 1 {
+        if operands.is_empty() {
             return Err(ParsingError::new(
                 ParsingError::NotEnoughOperands,
                 line,
@@ -405,11 +397,11 @@ mod test {
     fn test_parsing_operand_correct_registers() {
         let mut assembler = Assembler::new();
 
-        let registers = vec!["r0", "r1", "r2", "r3", "p0", "p1", "p2", "p3"];
+        let registers = ["r0", "r1", "r2", "r3", "p0", "p1", "p2", "p3"];
 
         //println!("_________________________________________________________");
         for register in registers.iter() {
-            let result = assembler.parse_operand(&register, 0, false);
+            let result = assembler.parse_operand(register, 0, false);
 
             assert!(result.is_ok());
             //println!("{:?}", result.unwrap());
@@ -421,10 +413,10 @@ mod test {
     fn test_parsing_operand_in_correct_registers() {
         let mut assembler = Assembler::new();
 
-        let registers = vec!["r-1", "r4", "rp", "pr", "p-3, p10"];
+        let registers = ["r-1", "r4", "rp", "pr", "p-3, p10"];
 
         for register in registers.iter() {
-            let result = assembler.parse_operand(&register, 0, false);
+            let result = assembler.parse_operand(register, 0, false);
             println!("_______________");
             println!("{:?}", result);
             println!("_______________");
@@ -436,10 +428,10 @@ mod test {
     fn test_parsing_operand() {
         let mut assembler = Assembler::new();
 
-        let registers = vec!["r0", "r1", "r2", "r3", "p0", "p1", "p2", "p3"];
+        let registers = ["r0", "r1", "r2", "r3", "p0", "p1", "p2", "p3"];
 
         for register in registers.iter() {
-            let result = assembler.parse_operand(&register, 0, false);
+            let result = assembler.parse_operand(register, 0, false);
 
             assert!(result.is_ok());
 

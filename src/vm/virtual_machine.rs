@@ -56,6 +56,12 @@ pub struct VirtualMachine {
     stack: Vec<i32>,
 }
 
+impl Default for VirtualMachine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VirtualMachine {
     /// Create an instance of VM
     ///
@@ -198,7 +204,7 @@ impl VirtualMachine {
     pub fn get_next_instruction(&self) -> Option<Instruction> {
         self.program.get(self.pc).cloned()
     }
-
+    #[allow(clippy::type_complexity)]
     /// Gets full state of virtual machine (acc, pc, flag, r, p, labels, program)
     pub fn get_state_full_old(
         &self,
@@ -304,8 +310,7 @@ impl VirtualMachine {
         self.p[index] = Port::Disconnected(value);
     }
 
-    //________________________________________________--
-
+    #[allow(dead_code)]
     fn sleep(&mut self, operand: Operand) {
         let _duration = match operand {
             Operand::IntegerValue(value) => value,
@@ -368,7 +373,7 @@ impl VirtualMachine {
             (Operand::ACC, Operand::GeneralRegister(index)) => self.r[index] = self.acc,
 
             (Operand::ACC, Operand::PortRegister(index)) => self.p[index].set(self.acc),
-            (Operand::ACC, Operand::ACC) => self.acc = self.acc,
+            (Operand::ACC, Operand::ACC) => {}
             (Operand::ACC, Operand::PC) => self.pc = self.acc as usize,
 
             (Operand::PC, Operand::IntegerValue(_)) => unreachable!(),
@@ -376,9 +381,7 @@ impl VirtualMachine {
 
             (Operand::PC, Operand::PortRegister(index)) => self.p[index].set(self.pc as i32),
             (Operand::PC, Operand::ACC) => self.acc = self.pc as i32,
-            (Operand::PC, Operand::PC) => self.pc = self.pc,
-
-            _ => unreachable!(),
+            (Operand::PC, Operand::PC) => {}
         }
     }
 
@@ -410,10 +413,11 @@ impl VirtualMachine {
         }
     }
 
+    #[allow(dead_code)]
     /// Adds label unless it is already declared
     fn add_label(&mut self, name: String) {
-        if !self.labels.contains_key(&name) {
-            self.labels.insert(name, self.pc);
+        if let std::collections::hash_map::Entry::Vacant(e) = self.labels.entry(name) {
+            e.insert(self.pc);
         }
     }
 
@@ -650,12 +654,12 @@ impl fmt::Display for VirtualMachine {
         writeln!(
             f,
             "_____________________________VM__________________________________"
-        );
+        )?;
         write!(f, "PC {}\t", self.pc)?;
         write!(f, "ACC: {}\t", self.acc)?;
-        write!(f, "FLG: {:?}\n", self.flag)?;
+        writeln!(f, "FLG: {:?}", self.flag)?;
         write!(f, "Registers: {:?}\t", self.r)?;
-        write!(f, "Ports: {:?}\n", self.p)?;
+        writeln!(f, "Ports: {:?}", self.p)?;
 
         // Separate the vectors from the rest
         writeln!(f, "Program Instructions:")?;
@@ -670,7 +674,7 @@ impl fmt::Display for VirtualMachine {
         writeln!(
             f,
             "_________________________________________________________________"
-        );
+        )?;
         Ok(())
     }
 }

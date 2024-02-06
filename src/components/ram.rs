@@ -14,6 +14,12 @@ pub struct Ram {
     mode_port: Port,
 }
 
+impl Default for Ram {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Ram {
     pub fn new() -> Self {
         Self {
@@ -85,7 +91,7 @@ impl Ram {
 
     pub fn disconnect_and_unlist_index_port(&mut self, conn: &mut Connection) {
         let (value, id) = match &self.index_port {
-            Port::Connected(v, id) => (*v.lock().unwrap(), id.clone()),
+            Port::Connected(v, id) => (*v.lock().unwrap(), *id),
             Port::Disconnected(v) => (*v, None),
         };
         if let Some(id) = id {
@@ -99,7 +105,7 @@ impl Ram {
 
     pub fn disconnect_and_unlist_data_port(&mut self, conn: &mut Connection) {
         let (value, id) = match &self.data_port {
-            Port::Connected(v, id) => (*v.lock().unwrap(), id.clone()),
+            Port::Connected(v, id) => (*v.lock().unwrap(), *id),
             Port::Disconnected(v) => (*v, None),
         };
         if let Some(id) = id {
@@ -113,7 +119,7 @@ impl Ram {
 
     pub fn disconnect_and_unlist_mode_port(&mut self, conn: &mut Connection) {
         let (value, id) = match &self.mode_port {
-            Port::Connected(v, id) => (*v.lock().unwrap(), id.clone()),
+            Port::Connected(v, id) => (*v.lock().unwrap(), *id),
             Port::Disconnected(v) => (*v, None),
         };
         if let Some(id) = id {
