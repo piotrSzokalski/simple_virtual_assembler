@@ -1,12 +1,8 @@
 use core::fmt;
-use serde::{
-    de::{value, EnumAccess, SeqAccess, VariantAccess, Visitor},
-    ser::SerializeTupleVariant,
-    Deserialize, Deserializer, Serialize, Serializer,
-};
+use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 
-use super::connection::{self, Connection};
+use super::connection::Connection;
 
 /// Port used for communication between vm and other components
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -56,7 +52,7 @@ impl Port {
         *self = Port::Connected(connection.get(), connection.get_id());
     }
 
-    pub fn disconnect(&mut self, connection: &mut Connection) {
+    pub fn disconnect(&mut self, _connection: &mut Connection) {
         let value = self.get();
         *self = Port::Disconnected(value);
     }

@@ -6,10 +6,7 @@ use std::{
 
 use simple_virtual_assembler::{
     assembler::assembler::Assembler,
-    components::{
-        connection::{self, Connection},
-        port::Port,
-    },
+    components::connection::Connection,
     vm::{
         instruction::Instruction,
         opcodes::Opcode,
@@ -23,7 +20,7 @@ use simple_virtual_assembler::{
 // So far seems to be working
 #[test]
 fn test_basic_connection_between_vms() {
-    let mut connection_to_vm2 = Connection::new();
+    let connection_to_vm2 = Connection::new();
     let mut connection_to_vm1 = connection_to_vm2.clone();
     let mut connection_to_vm2 = connection_to_vm2.clone();
 
@@ -271,7 +268,7 @@ fn test_basic_communication_between_vms_with_simpler_api() {
     let program2 = assembler2.parse(vm2_code).unwrap();
 
     // creating vm's with programs
-    let (vm1, vm1_copy) = VirtualMachine::new_shared_with_program(program1);
+    let (vm1, _vm1_copy) = VirtualMachine::new_shared_with_program(program1);
     let (vm2, vm2_copy) = VirtualMachine::new_shared_with_program(program2);
 
     // creating connections

@@ -1,11 +1,8 @@
 use std::usize;
 
-use serde::{Deserialize, Serialize, de::value};
+use serde::{Deserialize, Serialize};
 
-use super::{
-    connection::{self, Connection},
-    port::Port,
-};
+use super::{connection::Connection, port::Port};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Ram {
@@ -59,7 +56,7 @@ impl Ram {
 
     pub fn disconnect_index_port(&mut self) {
         let value = match &self.index_port {
-            Port::Connected(v, e) => *v.lock().unwrap(),
+            Port::Connected(v, _e) => *v.lock().unwrap(),
             Port::Disconnected(v) => *v,
         };
 
@@ -68,7 +65,7 @@ impl Ram {
 
     pub fn disconnect_data_port(&mut self) {
         let value = match &self.data_port {
-            Port::Connected(v, e) => *v.lock().unwrap(),
+            Port::Connected(v, _e) => *v.lock().unwrap(),
             Port::Disconnected(v) => *v,
         };
 
@@ -77,7 +74,7 @@ impl Ram {
 
     pub fn disconnect_mode_port(&mut self) {
         let value = match &self.mode_port {
-            Port::Connected(v, e) => *v.lock().unwrap(),
+            Port::Connected(v, _e) => *v.lock().unwrap(),
             Port::Disconnected(v) => *v,
         };
 
@@ -88,43 +85,43 @@ impl Ram {
 
     pub fn disconnect_and_unlist_index_port(&mut self, conn: &mut Connection) {
         let (value, id) = match &self.index_port {
-            Port::Connected(v, id) => (*v.lock().unwrap(), id.clone()) ,
+            Port::Connected(v, id) => (*v.lock().unwrap(), id.clone()),
             Port::Disconnected(v) => (*v, None),
         };
-        if let Some(id) = id  {
+        if let Some(id) = id {
             // R0:data
             let id = format!("R{}:index", id);
             conn.remove_port_id(id);
         }
-      
+
         self.index_port = Port::Disconnected(value);
     }
 
     pub fn disconnect_and_unlist_data_port(&mut self, conn: &mut Connection) {
         let (value, id) = match &self.data_port {
-            Port::Connected(v, id) => (*v.lock().unwrap(), id.clone()) ,
+            Port::Connected(v, id) => (*v.lock().unwrap(), id.clone()),
             Port::Disconnected(v) => (*v, None),
         };
-        if let Some(id) = id  {
+        if let Some(id) = id {
             // R0:data
             let id = format!("R{}:data", id);
             conn.remove_port_id(id);
         }
-      
+
         self.data_port = Port::Disconnected(value);
     }
 
     pub fn disconnect_and_unlist_mode_port(&mut self, conn: &mut Connection) {
         let (value, id) = match &self.mode_port {
-            Port::Connected(v, id) => (*v.lock().unwrap(), id.clone()) ,
+            Port::Connected(v, id) => (*v.lock().unwrap(), id.clone()),
             Port::Disconnected(v) => (*v, None),
         };
-        if let Some(id) = id  {
+        if let Some(id) = id {
             // R0:mode
             let id = format!("R{}:mode", id);
             conn.remove_port_id(id);
         }
-      
+
         self.data_port = Port::Disconnected(value);
     }
 
@@ -168,7 +165,7 @@ impl Ram {
     pub fn refresh(&mut self) {
         self.index = self.index_port.get().try_into().unwrap_or(0);
         if self.index >= self.data.len() {
-           self.index = self.data.len() - 1;
+            self.index = self.data.len() - 1;
         }
         if self.mode_port.get() == 0 {
             self.data[self.index] = self.data_port.get();

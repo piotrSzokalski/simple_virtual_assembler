@@ -1,8 +1,4 @@
-use serde::{
-    de::SeqAccess,
-    de::{value::Error, Visitor},
-    Deserialize, Deserializer, Serialize, Serializer,
-};
+use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 /// Shared data used to connect vms, analogs to a wire connecting them
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -115,7 +111,7 @@ impl Connection {
             .filter(|id| id.starts_with("R"))
             .map(|id| {
                 let split = id[1..].split(':').collect::<Vec<&str>>();
-                let ram_id = split[0].clone().parse::<usize>().unwrap();
+                let ram_id = split[0].parse::<usize>().unwrap();
                 let ram_port: usize = match split[1] {
                     "index" => 0,
                     "data" => 1,
@@ -131,7 +127,7 @@ impl Connection {
 }
 
 mod test {
-    use super::*;
+    use crate::components::connection::Connection;
 
     #[test]
     fn test_getting_connected_vms_and_ports_list() {

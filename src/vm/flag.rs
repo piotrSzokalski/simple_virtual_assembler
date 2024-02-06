@@ -1,4 +1,4 @@
-use std::fmt::{self, Display, Formatter, Result};
+use std::fmt::{self};
 
 /// Possible states of Flag register of SVA
 #[derive(Debug, PartialEq, Eq, Clone, Copy, serde::Deserialize, serde::Serialize)]

@@ -1,9 +1,3 @@
-use std::error;
-use std::fmt;
-use std::ops::IndexMut;
-
-use serde::de::value;
-
 use super::super::language::Language;
 
 use crate::vm::{instruction::Instruction, opcodes::Opcode, operand::Operand};
@@ -204,9 +198,7 @@ impl Assembler {
     ) -> Result<Instruction, ParsingError> {
         let line_without_comments: &str = line.split('#').next().unwrap_or("").trim();
         let words: Vec<&str> = line_without_comments.split_whitespace().collect();
-        //let ;instruction_word = words[0]    // <- FIXME:
-        //let operands = &words[1..];      // Panincs
-        if let Some(instruction_word) = words.get(0) {
+        if let Some(_instruction_word) = words.get(0) {
             let operands = &words[1..];
             let instruction_word = words[0];
             let instruction = match instruction_word {

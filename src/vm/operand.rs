@@ -1,6 +1,4 @@
-use std::fmt::{self, Display, Formatter, Result};
-
-use serde::de::value;
+use std::fmt::{self, Formatter, Result};
 
 /// Operand, integer or register
 #[derive(Debug, PartialEq, Eq, Clone, serde::Deserialize, serde::Serialize)]

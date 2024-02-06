@@ -1,6 +1,6 @@
 use crate::vm::opcodes::Opcode;
 
-use std::fmt::{self, write, Display, Formatter, Result};
+use std::fmt::{self, Formatter, Result};
 
 /// Represents instruction in SVA, either an opcode or label
 #[derive(PartialEq, Eq, Clone, Debug, serde::Deserialize, serde::Serialize)]

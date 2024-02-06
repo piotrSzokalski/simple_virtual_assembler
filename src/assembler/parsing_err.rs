@@ -1,11 +1,7 @@
 use std::error;
 use std::fmt;
-use std::ops::IndexMut;
-use std::string::ParseError;
 
 use rust_i18n::t;
-
-use crate::vm::{instruction::Instruction, opcodes::Opcode, operand::Operand};
 
 /// Data contained in parsing error
 #[derive(Debug, serde::Deserialize, serde::Serialize, Clone, PartialEq)]
@@ -88,7 +84,7 @@ impl fmt::Display for ParsingError {
             ParsingError::NotEnoughOperands(_) => t!("error.not_enough_operands"),
             ParsingError::TooManyOperands(_) => t!("error.too_many_operands"),
             ParsingError::StackNotPresent(_) => t!("error.stack_not_present"),
-            ParsingError::InvalidCharLiteral(_) =>  t!("error.invalid_char_literal"),
+            ParsingError::InvalidCharLiteral(_) => t!("error.invalid_char_literal"),
         };
 
         let error_data = self.get_data();
@@ -134,7 +130,7 @@ mod tests {
 
         rust_i18n::set_locale("pl");
 
-        let x = parsing_error.to_string();
+        let _x = parsing_error.to_string();
 
         assert_eq!(
             "Błąd parsowania na lini:124\tZbyt wiele operandów\tplace_holder",

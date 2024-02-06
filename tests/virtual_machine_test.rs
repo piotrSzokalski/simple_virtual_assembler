@@ -1,11 +1,11 @@
 extern crate simple_virtual_assembler;
 
-use simple_virtual_assembler::assembler;
+
 use simple_virtual_assembler::assembler::assembler::Assembler;
 use simple_virtual_assembler::assembler::parsing_err::ParsingError;
 use simple_virtual_assembler::vm;
-use simple_virtual_assembler::vm::opcodes;
-use simple_virtual_assembler::vm::virtual_machine;
+
+
 use simple_virtual_assembler::vm::virtual_machine::VirtualMachine;
 
 /// Parses and runs program on vm

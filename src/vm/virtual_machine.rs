@@ -1,6 +1,6 @@
 //use std::collections::btree_map::Values;
 
-use std::fmt::{self, Display, Formatter, Result};
+use std::fmt::{self};
 
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
@@ -10,7 +10,6 @@ use std::{thread, usize};
 
 use crate::components::connection::Connection;
 use crate::components::port::Port;
-use crate::components::{self, connection};
 
 use crate::vm::{
     flag::Flag,
@@ -18,8 +17,7 @@ use crate::vm::{
     opcodes::{JMPCondition, Opcode},
 };
 
-use super::instruction;
-use super::operand::{self, Operand};
+use super::operand::Operand;
 
 /// Status of vm
 #[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq, Clone, Copy)]
@@ -309,7 +307,7 @@ impl VirtualMachine {
     //________________________________________________--
 
     fn sleep(&mut self, operand: Operand) {
-        let duration = match operand {
+        let _duration = match operand {
             Operand::IntegerValue(value) => value,
             Operand::GeneralRegister(index) => self.r[index],
             Operand::PortRegister(index) => self.p[index].get(),
