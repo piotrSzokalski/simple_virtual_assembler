@@ -30,7 +30,7 @@ impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             Instruction::Opcode(opcode) => write!(f, "{}", opcode),
-            Instruction::Label(name, line) => write!(f, "{}({})", name, line),
+            Instruction::Label(name, _) => write!(f, "{}", name),
         }
     }
 }
