@@ -32,8 +32,8 @@ impl fmt::Display for Operand {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             Operand::IntegerValue(value) => write!(f, "{}", value),
-            Operand::GeneralRegister(register) => write!(f, "r:{}", register),
-            Operand::PortRegister(port) => write!(f, "p:{}", port),
+            Operand::GeneralRegister(register) => write!(f, "r{}", register),
+            Operand::PortRegister(port) => write!(f, "p{}", port),
             Operand::ACC => write!(f, "acc"),
             Operand::PC => write!(f, "pc"),
         }
